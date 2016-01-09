@@ -118,6 +118,7 @@ class PlayState extends State {
         for (y in 0 ... mapHeight) {
             for (x in 0 ... mapWidth) {
                 tiles[y][x].color = None;
+                tiles[y][x].length = 1;
             }
         }
         for (line in lines) {
@@ -142,7 +143,7 @@ class PlayState extends State {
             for (x in 0 ... mapWidth) {
                 if (!tiles[y][x].connect) continue;
                 Luxe.draw.box({
-                    rect: new luxe.Rectangle(x * tileSize + tileSize / 4, y * tileSize + tileSize / 4, tileSize / 2, tileSize / 2),
+                    rect: new luxe.Rectangle(x * tileSize + tileSize / 4, y * tileSize + tileSize / 4, (tileSize / 2) * tiles[y][x].length / connectionLengths, (tileSize / 2) * tiles[y][x].length / connectionLengths),
                     color: convert_color(tiles[y][x].color),
                     immediate: true
                 });
@@ -153,14 +154,20 @@ class PlayState extends State {
     function propagate_color(x: Int, y: Int, color :ConnectColor, length :Int) {
         tiles[y][x].color = color;
         var new_color = color;
+        var new_length = length;
         if (x > 0 && tiles[y][x - 1].connect && tiles[y][x - 1].color != new_color)
             new_color = mix_colors(propagate_color(x - 1, y, color, length + 1), new_color);
+            // if (new_color == color) new_length++;
         if (x < mapWidth - 1 && tiles[y][x + 1].connect && tiles[y][x+ 1].color != new_color)
             new_color = mix_colors(propagate_color(x + 1, y, color, length + 1), new_color);
+            // if (new_color == color) new_length++;
         if (y > 0 && tiles[y - 1][x].connect && tiles[y - 1][x].color != new_color)
             new_color = mix_colors(propagate_color(x, y - 1, color, length + 1), new_color);
+            // if (new_color == color) new_length++;
         if (y < mapHeight - 1 && tiles[y + 1][x].connect && tiles[y + 1][x].color != new_color)
             new_color = mix_colors(propagate_color(x, y + 1, color, length + 1), new_color);
+            // if (new_color == color) new_length++;
+        tiles[y][x].length = new_length;
         tiles[y][x].color = new_color;
         return new_color;
     }
