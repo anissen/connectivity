@@ -12,31 +12,37 @@ import snow.api.Promise;
 enum ConnectColor {
     None;
     Invalid;
-    Red;
+    Orange;
     Green;
     Blue;
 }
 
 typedef ColorLine = {
     color :ConnectColor,
-    points :Array<{x :Int, y :Int}>
+    points :Array<{x :Int, y :Int}>,
+    connections :Int
+}
+
+typedef Tile = {
+    color :ConnectColor,
+    connect :Bool,
+    length :Int
 }
 
 class PlayState extends State {
     static public var StateId :String = 'PlayState';
-    var colors :Array<Array<ConnectColor>>;
-    var connects :Array<Array<Bool>>;
+    var tiles :Array<Array<Tile>>;
     var lines :Array<ColorLine>;
 
     var mapWidth :Int = 5;
     var mapHeight :Int = 5;
     var tileSize :Int = 128;
+    var connectionLengths = 3;
 
     public function new() {
         super({ name: StateId });
-        connects = [];
+        tiles = [];
         lines = [];
-        colors = [];
     }
 
     override function init() {
@@ -48,6 +54,7 @@ class PlayState extends State {
 
         lines.push({
             color: Blue,
+            connections: 2,
             points: [
                 { x: 1, y: 0 },
                 { x: 1, y: 1 },
@@ -60,7 +67,8 @@ class PlayState extends State {
         });
 
         lines.push({
-            color: Green,
+            color: Orange,
+            connections: 1,
             points: [
                 { x: 3, y: 0 },
                 { x: 3, y: 1 },
@@ -70,7 +78,6 @@ class PlayState extends State {
 
         for (y in 0 ... mapHeight) {
             var arr = [];
-            var colorArr = [];
             for (x in 0 ... mapWidth) {
                 Luxe.draw.line({
                     p0: new Vector(0, y * tileSize),
@@ -83,11 +90,9 @@ class PlayState extends State {
                     p1: new Vector(x * tileSize, mapHeight * tileSize),
                     color: new Color(0.2, 0.2, 0.2)
                 });
-                arr.push(false);
-                colorArr.push(None);
+                arr.push({ connect: false, color: None, length: 0 });
             }
-            connects.push(arr);
-            colors.push(colorArr);
+            tiles.push(arr);
         }
 
         Luxe.renderer.state.lineWidth(4);
@@ -104,64 +109,69 @@ class PlayState extends State {
     override public function onmouseup(event :luxe.Input.MouseEvent) {
         var x = Math.floor(event.x / tileSize);
         var y = Math.floor(event.y / tileSize);
-        connects[y][x] = !connects[y][x];
+        tiles[y][x].connect = !tiles[y][x].connect;
         calc_colors();
+        has_won();
     }
 
     function calc_colors() {
         for (y in 0 ... mapHeight) {
             for (x in 0 ... mapWidth) {
-                colors[y][x] = None;
+                tiles[y][x].color = None;
             }
         }
         for (line in lines) {
             for (p in line.points) {
-            if (connects[p.y][p.x] && colors[p.y][p.x] != line.color /* not already colored this color */) {
-                    if (colors[p.y][p.x] == None) { // not yet colored
-                        propagate_color(p.x, p.y, line.color);
+            if (tiles[p.y][p.x].connect && tiles[p.y][p.x].color != line.color /* not already colored this color */) {
+                    if (tiles[p.y][p.x].color == None) { // not yet colored
+                        propagate_color(p.x, p.y, line.color, 1);
                     } else {  // colored a different color -- error
-                        propagate_color(p.x, p.y, Invalid);
+                        propagate_color(p.x, p.y, Invalid, 1);
                     }
                 }
             }
         }
     }
 
+    function has_won() {
+
+    }
+
     override function onrender() {
         for (y in 0 ... mapHeight) {
             for (x in 0 ... mapWidth) {
-                if (!connects[y][x]) continue;
+                if (!tiles[y][x].connect) continue;
                 Luxe.draw.box({
                     rect: new luxe.Rectangle(x * tileSize + tileSize / 4, y * tileSize + tileSize / 4, tileSize / 2, tileSize / 2),
-                    color: convert_color(colors[y][x]),
+                    color: convert_color(tiles[y][x].color),
                     immediate: true
                 });
             }
         }
     }
 
-    function propagate_color(x: Int, y: Int, color :ConnectColor) {
-        colors[y][x] = color;
+    function propagate_color(x: Int, y: Int, color :ConnectColor, length :Int) {
+        tiles[y][x].color = color;
         var new_color = color;
-        if (x > 0 && connects[y][x - 1] && colors[y][x - 1] != new_color)
-            new_color = mix_colors(propagate_color(x - 1, y, color), new_color);
-        if (x < mapWidth - 1 && connects[y][x + 1] && colors[y][x+ 1] != new_color)
-            new_color = mix_colors(propagate_color(x + 1, y, color), new_color);
-        if (y > 0 && connects[y - 1][x] && colors[y - 1][x] != new_color)
-            new_color = mix_colors(propagate_color(x, y - 1, color), new_color);
-        if (y < mapHeight - 1 && connects[y + 1][x] && colors[y + 1][x] != new_color)
-            new_color = mix_colors(propagate_color(x, y + 1, color), new_color);
-        colors[y][x] = new_color;
+        if (x > 0 && tiles[y][x - 1].connect && tiles[y][x - 1].color != new_color)
+            new_color = mix_colors(propagate_color(x - 1, y, color, length + 1), new_color);
+        if (x < mapWidth - 1 && tiles[y][x + 1].connect && tiles[y][x+ 1].color != new_color)
+            new_color = mix_colors(propagate_color(x + 1, y, color, length + 1), new_color);
+        if (y > 0 && tiles[y - 1][x].connect && tiles[y - 1][x].color != new_color)
+            new_color = mix_colors(propagate_color(x, y - 1, color, length + 1), new_color);
+        if (y < mapHeight - 1 && tiles[y + 1][x].connect && tiles[y + 1][x].color != new_color)
+            new_color = mix_colors(propagate_color(x, y + 1, color, length + 1), new_color);
+        tiles[y][x].color = new_color;
         return new_color;
     }
 
     function convert_color(color :ConnectColor) :Color {
         return switch (color) {
-            case Invalid: new Color(Math.random(), Math.random(), Math.random());
-            case None: new Color(0, 0, 0);
-            case Red: new Color(0.5, 0, 0);
+            case Invalid: new Color(0.2 * Math.random(), 0.2 * Math.random(), 0.2 * Math.random());
+            case None: new Color(0.2, 0.2, 0.2);
+            case Orange: new Color(1, 0.5, 0.1);
             case Green: new Color(0, 0.5, 0);
-            case Blue: new Color(0, 0, 0.5);
+            case Blue: new Color(0, 0.45, 0.85);
         }
     }
 
