@@ -1,0 +1,80 @@
+{
+    luxe:{
+        window: {
+            title: 'connectivity',
+            width: 640,
+            height: 960,
+            fullscreen: false,
+            resizable: true,
+            borderless: false
+        }
+    },
+
+    project : {
+        name : 'connectivity',
+        version : '0.2.0',
+        author : 'Anders Nissen',
+
+        app : {
+            name : 'connectivity',
+            package : 'com.andersnissen.connectivity',
+            main : 'Main',
+            mobile: {
+                orientation: 'portrait',
+                android: {
+                    sdk_min: '12',
+                    sdk_target: '19'
+                },
+                ios: {
+                    devices: 'iPhone',
+                    deployment_target: '8.0',
+                }
+            }
+        },
+
+        build : {
+            number: 1,
+
+            "comment" : "flow build android --d android_release",
+            dependencies : {
+                luxe : '*',
+            },
+            defines : [
+                'absolute-path'
+            ],
+            files: {
+                keystore: 'indiedev.keystore => project/indiedev.keystore',
+                passwords : 'passwords.sensitive.properties => project/passwords.sensitive.properties'
+            },
+        },
+
+        files : {
+            config : 'config.json',
+            assets : 'assets/'
+        }
+    },
+
+    if: {
+        android_release: {
+            app: {
+                mobile: {
+                    android: {
+                        build_type: "release",
+                        keystore_path: "indiedev.keystore",
+                        keystore_alias: "indiedev"
+                    }
+                }
+            },
+
+            build: {
+                defines: ['no_debug_console']
+            }
+        },
+
+        ios: {
+            build: {
+                defines: ['no_debug_console']
+            }
+        }
+    }
+}
