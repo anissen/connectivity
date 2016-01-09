@@ -141,12 +141,6 @@ class PlayState extends State {
     }
 
     function propagate_color(x: Int, y: Int, color :ConnectColor) {
-        Luxe.draw.box({
-            rect: new luxe.Rectangle(x * tileSize + tileSize / 4, y * tileSize + tileSize / 4, Math.random() * tileSize / 2, Math.random() * tileSize / 2),
-            color: convert_color(color),
-            immediate: true
-        });
-
         colors[y][x] = color;
         var new_color = color;
         if (x > 0 && connects[y][x - 1] && colors[y][x - 1] != new_color)
@@ -170,15 +164,6 @@ class PlayState extends State {
             case Blue: new Color(0, 0, 0.5);
         }
     }
-
-    // function get_color_for_tile(x :Int, y :Int) :ConnectColor {
-    //     var color = colors[y][x];
-    //     if (x > 0) color = mix_colors(colors[y][x - 1], color);
-    //     if (x < mapWidth - 1) color = mix_colors(colors[y][x + 1], color);
-    //     if (y > 0) color = mix_colors(colors[y - 1][x], color);
-    //     if (y < mapHeight - 1) color = mix_colors(colors[y + 1][x], color);
-    //     return color;
-    // }
 
     function mix_colors(color1 :ConnectColor, color2 :ConnectColor) :ConnectColor {
         if (color1 == color2) return color1;
