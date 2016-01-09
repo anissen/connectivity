@@ -22,7 +22,7 @@ class Main extends luxe.Game {
 
         luxe.tween.Actuate.defaultEase = luxe.tween.easing.Quad.easeInOut;
 
-        Luxe.renderer.clear_color.set(25/255, 35/255, 55/255);
+        Luxe.renderer.clear_color.set(10/255, 10/255, 10/255);
 
         states = new States({ name: 'state_machine' });
         states.add(new PlayState());

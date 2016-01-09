@@ -17,29 +17,20 @@ enum ConnectColor {
     Blue;
 }
 
+typedef ColorLine = {
+    color :ConnectColor,
+    points :Array<{x :Int, y :Int}>
+}
+
 class PlayState extends State {
     static public var StateId :String = 'PlayState';
     var colors :Array<Array<ConnectColor>>;
     var connects :Array<Array<Bool>>;
-    var lines :Array<Array<{x :Int, y :Int}>>;
+    var lines :Array<ColorLine>;
 
     var mapWidth :Int = 5;
     var mapHeight :Int = 5;
     var tileSize :Int = 128;
-    var blueLine = [
-        { x: 1, y: 0 },
-        { x: 1, y: 1 },
-        { x: 2, y: 1 },
-        { x: 2, y: 2 },
-        { x: 3, y: 2 },
-        { x: 3, y: 3 },
-        { x: 3, y: 4 }
-    ];
-    var greenLine = [
-        { x: 3, y: 0 },
-        { x: 3, y: 1 },
-        { x: 4, y: 1 }
-    ];
 
     public function new() {
         super({ name: StateId });
@@ -55,14 +46,42 @@ class PlayState extends State {
     function reset(seed :Float) {
         Luxe.scene.empty();
 
+        lines.push({
+            color: Blue,
+            points: [
+                { x: 1, y: 0 },
+                { x: 1, y: 1 },
+                { x: 2, y: 1 },
+                { x: 2, y: 2 },
+                { x: 3, y: 2 },
+                { x: 3, y: 3 },
+                { x: 3, y: 4 }
+            ]
+        });
+
+        lines.push({
+            color: Green,
+            points: [
+                { x: 3, y: 0 },
+                { x: 3, y: 1 },
+                { x: 4, y: 1 }
+            ]
+        });
+
         for (y in 0 ... mapHeight) {
             var arr = [];
             var colorArr = [];
             for (x in 0 ... mapWidth) {
+                Luxe.draw.line({
+                    p0: new Vector(0, y * tileSize),
+                    p1: new Vector(mapWidth * tileSize, y * tileSize),
+                    color: new Color(0.2, 0.2, 0.2)
+                });
                 var col = 0.2 * Math.random();
-                Luxe.draw.box({
-                    rect: new luxe.Rectangle(x * tileSize, y * tileSize, tileSize, tileSize),
-                    color: new Color(col, col, col),
+                Luxe.draw.line({
+                    p0: new Vector(x * tileSize, 0),
+                    p1: new Vector(x * tileSize, mapHeight * tileSize),
+                    color: new Color(0.2, 0.2, 0.2)
                 });
                 arr.push(false);
                 colorArr.push(None);
@@ -71,28 +90,15 @@ class PlayState extends State {
             colors.push(colorArr);
         }
 
-        // for (p in blueLine) {
-        //     colors[p.y][p.x] = Blue;
-        // }
-        // for (p in greenLine) {
-        //     colors[p.y][p.x] = Green;
-        // }
-
-        var blueLineVector = [ for (l in blueLine) new Vector(tileSize / 2 + l.x * tileSize, tileSize / 2 + l.y * tileSize) ];
-        var greenLineVector = [ for (l in greenLine) new Vector(tileSize / 2 + l.x * tileSize, tileSize / 2 + l.y * tileSize) ];
         Luxe.renderer.state.lineWidth(4);
-        Luxe.draw.poly({
-            color: new Color(0, 0, 0.7),
-            points: blueLineVector,
-            solid : false,
-            depth: 2
-        });
-        Luxe.draw.poly({
-            color: new Color(0, 0.7, 0),
-            points: greenLineVector,
-            solid : false,
-            depth: 2
-        });
+        for (line in lines) {
+            Luxe.draw.poly({
+                color: convert_color(line.color),
+                points: [ for (p in line.points) new Vector(tileSize / 2 + p.x * tileSize, tileSize / 2 + p.y * tileSize) ],
+                solid : false,
+                depth: 2
+            });
+        }
     }
 
     override public function onmouseup(event :luxe.Input.MouseEvent) {
@@ -108,17 +114,14 @@ class PlayState extends State {
                 colors[y][x] = None;
             }
         }
-        for (p in blueLine) {
-            if (connects[p.y][p.x]) {
-                propagate_color(p.x, p.y, Blue);
-            }
-        }
-        for (p in greenLine) {
-            if (connects[p.y][p.x] && colors[p.y][p.x] != Green /* not already colored green */) {
-                if (colors[p.y][p.x] == None) { // not yet colored
-                    propagate_color(p.x, p.y, Green);
-                } else {  // colored a different color -- error
-                    propagate_color(p.x, p.y, Invalid);
+        for (line in lines) {
+            for (p in line.points) {
+            if (connects[p.y][p.x] && colors[p.y][p.x] != line.color /* not already colored this color */) {
+                    if (colors[p.y][p.x] == None) { // not yet colored
+                        propagate_color(p.x, p.y, line.color);
+                    } else {  // colored a different color -- error
+                        propagate_color(p.x, p.y, Invalid);
+                    }
                 }
             }
         }
