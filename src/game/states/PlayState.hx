@@ -110,9 +110,9 @@ class PlayState extends State {
     override public function onmouseup(event :luxe.Input.MouseEvent) {
         var x = Math.floor(event.x / tileSize);
         var y = Math.floor(event.y / tileSize);
+        if (x < 0 || x >= mapWidth || y < 0 || y >= mapHeight) return;
         tiles[y][x].connect = !tiles[y][x].connect;
         calc_colors();
-        has_won();
     }
 
     function calc_colors() {
@@ -130,10 +130,13 @@ class PlayState extends State {
             }
         }
 
+        var has_won = true;
         var connections = [];
         for (line in lines) {
+            var number_of_connections = 0;
             for (p in line.points) {
                 if (can_visit(p.x, p.y)) {
+                    number_of_connections++;
                     var tiles = get_connection(p.x, p.y);
                     var color = None;
                     for (tile in tiles) {
@@ -143,8 +146,10 @@ class PlayState extends State {
                         color: color,
                         tiles: tiles
                     });
+                    if (color == Invalid || tiles.length != connectionLengths) has_won = false;
                 }
             }
+            if (number_of_connections != line.connections) has_won = false;
         }
 
         for (connection in connections) {
@@ -153,20 +158,23 @@ class PlayState extends State {
                 tile.length = connection.tiles.length;
             }
         }
-    }
 
-    function has_won() {
-
+        if (has_won) {
+            trace('You won!');
+            // reset(Math.random());
+        }
     }
 
     override function onrender() {
         for (y in 0 ... mapHeight) {
             for (x in 0 ... mapWidth) {
                 if (!tiles[y][x].connect) continue;
+                var boxSize = Math.min((tiles[y][x].length / connectionLengths) * tileSize / 2, tileSize / 2);
+                var centerOffset = tileSize / 2 - boxSize / 2;
                 Luxe.draw.box({
-                    rect: new luxe.Rectangle(x * tileSize + tileSize / 4, y * tileSize + tileSize / 4, (tileSize / 2) * tiles[y][x].length / connectionLengths, (tileSize / 2) * tiles[y][x].length / connectionLengths),
+                    rect: new luxe.Rectangle(x * tileSize + centerOffset, y * tileSize + centerOffset, boxSize, boxSize),
                     color: convert_color(tiles[y][x].color),
-                    immediate: true
+                    immediate: true,
                 });
             }
         }
