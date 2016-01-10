@@ -38,7 +38,7 @@ class PlayState extends State {
     var mapWidth :Int = 5;
     var mapHeight :Int = 5;
     var tileSize :Int = 128;
-    var connectionLengths = 3;
+    var connectionLengths = 4;
 
     public function new() {
         super({ name: StateId });
@@ -55,7 +55,7 @@ class PlayState extends State {
 
         lines.push({
             color: Blue,
-            connections: 2,
+            connections: 3,
             points: [
                 { x: 1, y: 0 },
                 { x: 1, y: 1 },
@@ -171,6 +171,15 @@ class PlayState extends State {
                 if (!tiles[y][x].connect) continue;
                 var boxSize = Math.min((tiles[y][x].length / connectionLengths) * tileSize / 2, tileSize / 2);
                 var centerOffset = tileSize / 2 - boxSize / 2;
+                if (tiles[y][x].color != Invalid && tiles[y][x].length == connectionLengths) {
+                    var boxSizeBorder = Math.min((tiles[y][x].length / connectionLengths) * tileSize / 1.8, tileSize / 1.8);
+                    var centerOffsetBorder = tileSize / 2 - boxSizeBorder / 2;
+                    Luxe.draw.box({
+                        rect: new luxe.Rectangle(x * tileSize + centerOffsetBorder, y * tileSize + centerOffsetBorder, boxSizeBorder, boxSizeBorder),
+                        color: new Color(1, 1, 1),
+                        immediate: true,
+                    });
+                }
                 Luxe.draw.box({
                     rect: new luxe.Rectangle(x * tileSize + centerOffset, y * tileSize + centerOffset, boxSize, boxSize),
                     color: convert_color(tiles[y][x].color),
