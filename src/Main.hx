@@ -16,7 +16,7 @@ class Main extends luxe.Game {
     override function ready() {
         luxe.tween.Actuate.defaultEase = luxe.tween.easing.Quad.easeInOut;
 
-        Luxe.renderer.clear_color.set(0.0667, 0.0667, 0.0667);
+        Luxe.renderer.clear_color.set(0.05, 0.05, 0.05);
 
         states = new States({ name: 'state_machine' });
         states.add(new PlayState());

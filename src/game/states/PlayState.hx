@@ -77,6 +77,12 @@ class PlayState extends State {
             ]
         });
 
+        Luxe.draw.box({
+            rect: new luxe.Rectangle(0, 0, mapWidth * tileSize, mapHeight * tileSize),
+            color: new Color(0.0667, 0.0667, 0.0667),
+            depth: -1
+        });
+
         for (y in 0 ... mapHeight) {
             var arr = [];
             for (x in 0 ... mapWidth) {
@@ -95,6 +101,11 @@ class PlayState extends State {
             }
             tiles.push(arr);
         }
+
+        Luxe.draw.rectangle({
+            rect: new luxe.Rectangle(0, 0, mapWidth * tileSize, mapHeight * tileSize),
+            color: new Color(0.3, 0.3, 0.3)
+        });
 
         Luxe.renderer.state.lineWidth(4);
         for (line in lines) {
