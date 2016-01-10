@@ -39,11 +39,13 @@ class PlayState extends State {
     var mapHeight :Int = 5;
     var tileSize :Int = 128;
     var connectionLengths = 4;
+    var invalidColor :Color;
 
     public function new() {
         super({ name: StateId });
         tiles = [];
         lines = [];
+        invalidColor = new Color();
     }
 
     override function init() {
@@ -116,6 +118,9 @@ class PlayState extends State {
                 depth: 2
             });
         }
+
+        invalidColor.set(0.4, 0.4, 0.4);
+        invalidColor.tween(0.6, { r: 0.8, g: 0.8, b: 0.8 }).reflect().repeat();
     }
 
     override public function onmouseup(event :luxe.Input.MouseEvent) {
@@ -221,7 +226,7 @@ class PlayState extends State {
 
     function convert_color(color :ConnectColor) :Color {
         return switch (color) {
-            case Invalid: new Color(0.2 * Math.random(), 0.2 * Math.random(), 0.2 * Math.random());
+            case Invalid: invalidColor;
             case None: new Color(0.2, 0.2, 0.2);
             case Orange: new Color(1, 0.5, 0.1);
             case Green: new Color(0, 0.5, 0);
