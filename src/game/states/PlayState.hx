@@ -26,7 +26,8 @@ typedef ColorLine = {
 typedef Tile = {
     color :ConnectColor,
     connect :Bool,
-    length :Int
+    length :Int,
+    visited :Bool
 }
 
 class PlayState extends State {
@@ -90,7 +91,7 @@ class PlayState extends State {
                     p1: new Vector(x * tileSize, mapHeight * tileSize),
                     color: new Color(0.2, 0.2, 0.2)
                 });
-                arr.push({ connect: false, color: None, length: 0 });
+                arr.push({ connect: false, color: None, length: 0, visited: false });
             }
             tiles.push(arr);
         }
@@ -119,17 +120,37 @@ class PlayState extends State {
             for (x in 0 ... mapWidth) {
                 tiles[y][x].color = None;
                 tiles[y][x].length = 1;
+                tiles[y][x].visited = false;
             }
         }
+
         for (line in lines) {
             for (p in line.points) {
-            if (tiles[p.y][p.x].connect && tiles[p.y][p.x].color != line.color /* not already colored this color */) {
-                    if (tiles[p.y][p.x].color == None) { // not yet colored
-                        propagate_color(p.x, p.y, line.color, 1);
-                    } else {  // colored a different color -- error
-                        propagate_color(p.x, p.y, Invalid, 1);
+                tiles[p.y][p.x].color = line.color;
+            }
+        }
+
+        var connections = [];
+        for (line in lines) {
+            for (p in line.points) {
+                if (can_visit(p.x, p.y)) {
+                    var tiles = get_connection(p.x, p.y);
+                    var color = None;
+                    for (tile in tiles) {
+                        color = mix_colors(tile.color, color);
                     }
+                    connections.push({
+                        color: color,
+                        tiles: tiles
+                    });
                 }
+            }
+        }
+
+        for (connection in connections) {
+            for (tile in connection.tiles) {
+                tile.color = connection.color;
+                tile.length = connection.tiles.length;
             }
         }
     }
@@ -151,25 +172,23 @@ class PlayState extends State {
         }
     }
 
-    function propagate_color(x: Int, y: Int, color :ConnectColor, length :Int) {
-        tiles[y][x].color = color;
-        var new_color = color;
-        var new_length = length;
-        if (x > 0 && tiles[y][x - 1].connect && tiles[y][x - 1].color != new_color)
-            new_color = mix_colors(propagate_color(x - 1, y, color, length + 1), new_color);
-            // if (new_color == color) new_length++;
-        if (x < mapWidth - 1 && tiles[y][x + 1].connect && tiles[y][x+ 1].color != new_color)
-            new_color = mix_colors(propagate_color(x + 1, y, color, length + 1), new_color);
-            // if (new_color == color) new_length++;
-        if (y > 0 && tiles[y - 1][x].connect && tiles[y - 1][x].color != new_color)
-            new_color = mix_colors(propagate_color(x, y - 1, color, length + 1), new_color);
-            // if (new_color == color) new_length++;
-        if (y < mapHeight - 1 && tiles[y + 1][x].connect && tiles[y + 1][x].color != new_color)
-            new_color = mix_colors(propagate_color(x, y + 1, color, length + 1), new_color);
-            // if (new_color == color) new_length++;
-        tiles[y][x].length = new_length;
-        tiles[y][x].color = new_color;
-        return new_color;
+    function can_visit(x :Int, y :Int) :Bool {
+        if (x < 0 || x >= mapWidth) return false;
+        if (y < 0 || y >= mapHeight) return false;
+        return tiles[y][x].connect && !tiles[y][x].visited;
+    }
+
+    function get_connection(x: Int, y: Int) :Array<Tile> {
+        if (!can_visit(x, y)) return [];
+        tiles[y][x].visited = true;
+
+        var list = [];
+        list.push(tiles[y][x]);
+        if (can_visit(x - 1, y)) list = list.concat(get_connection(x - 1, y));
+        if (can_visit(x + 1, y)) list = list.concat(get_connection(x + 1, y));
+        if (can_visit(x, y - 1)) list = list.concat(get_connection(x, y - 1));
+        if (can_visit(x, y + 1)) list = list.concat(get_connection(x, y + 1));
+        return list;
     }
 
     function convert_color(color :ConnectColor) :Color {
