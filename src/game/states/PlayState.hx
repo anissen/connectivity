@@ -20,7 +20,8 @@ enum ConnectColor {
 typedef ColorLine = {
     color :ConnectColor,
     points :Array<{x :Int, y :Int}>,
-    connections :Int
+    requiredConnections :Int,
+    connections :Int,
 }
 
 typedef Tile = {
@@ -39,6 +40,8 @@ class PlayState extends State {
     var mapHeight :Int = 5;
     var tileSize :Int = 128;
     var connectionLengths = 4;
+
+    var margin :Int = 64;
     var invalidColor :Color;
 
     public function new() {
@@ -57,7 +60,8 @@ class PlayState extends State {
 
         lines.push({
             color: Blue,
-            connections: 3,
+            requiredConnections: 3,
+            connections: 0,
             points: [
                 { x: 1, y: 0 },
                 { x: 1, y: 1 },
@@ -71,7 +75,8 @@ class PlayState extends State {
 
         lines.push({
             color: Orange,
-            connections: 1,
+            requiredConnections: 1,
+            connections: 0,
             points: [
                 { x: 3, y: 0 },
                 { x: 3, y: 1 },
@@ -82,6 +87,7 @@ class PlayState extends State {
         Luxe.draw.box({
             rect: new luxe.Rectangle(0, 0, mapWidth * tileSize, mapHeight * tileSize),
             color: new Color(0.0667, 0.0667, 0.0667),
+            origin: new Vector(-margin, -margin),
             depth: -1
         });
 
@@ -91,13 +97,15 @@ class PlayState extends State {
                 Luxe.draw.line({
                     p0: new Vector(0, y * tileSize),
                     p1: new Vector(mapWidth * tileSize, y * tileSize),
-                    color: new Color(0.2, 0.2, 0.2)
+                    color: new Color(0.2, 0.2, 0.2),
+                    origin: new Vector(-margin, -margin)
                 });
                 var col = 0.2 * Math.random();
                 Luxe.draw.line({
                     p0: new Vector(x * tileSize, 0),
                     p1: new Vector(x * tileSize, mapHeight * tileSize),
-                    color: new Color(0.2, 0.2, 0.2)
+                    color: new Color(0.2, 0.2, 0.2),
+                    origin: new Vector(-margin, -margin)
                 });
                 arr.push({ connect: false, color: None, length: 0, visited: false });
             }
@@ -106,26 +114,49 @@ class PlayState extends State {
 
         Luxe.draw.rectangle({
             rect: new luxe.Rectangle(0, 0, mapWidth * tileSize, mapHeight * tileSize),
-            color: new Color(0.3, 0.3, 0.3)
+            color: new Color(0.3, 0.3, 0.3),
+            origin: new Vector(-margin, -margin)
         });
 
         Luxe.renderer.state.lineWidth(4);
         for (line in lines) {
             Luxe.draw.poly({
                 color: convert_color(line.color),
-                points: [ for (p in line.points) new Vector(tileSize / 2 + p.x * tileSize, tileSize / 2 + p.y * tileSize) ],
+                points: calculate_line_points(line.points), //[ for (p in line.points) new Vector(tileSize / 2 + p.x * tileSize, tileSize / 2 + p.y * tileSize) ],
                 solid : false,
+                origin: new Vector(-margin, -margin),
                 depth: 2
             });
+            // for (c in 0 ... line.connections) {
+            //     Luxe.draw.box({
+            //         rect: new luxe.Rectangle(line.points[0].x * tileSize + tileSize / 2 - 5, line.points[0].y * tileSize + tileSize / 2 - 25, 10, 10),
+            //         color: convert_color(line.color),
+            //         origin: new Vector(-margin + (-(line.connections + 1) / 2 + c + 1) * 20, 0)
+            //     });
+            // }
         }
 
         invalidColor.set(0.4, 0.4, 0.4);
         invalidColor.tween(0.6, { r: 0.8, g: 0.8, b: 0.8 }).reflect().repeat();
     }
 
+    function calculate_line_points(points :Array<{x :Int, y :Int}>) {
+        var p = [];
+        for (i in 0 ... points.length) {
+            var point = new Vector(tileSize / 2 + points[i].x * tileSize, tileSize / 2 + points[i].y * tileSize);
+            if (i == 0) {
+                point = new Vector(tileSize / 2 + (points[i].x - (points[i + 1].x - points[i].x) / 2) * tileSize, tileSize / 2 + (points[i].y - (points[i + 1].y - points[i].y) / 2)  * tileSize);
+            } else if (i == points.length - 1) {
+                point = new Vector(tileSize / 2 + (points[i].x - (points[i - 1].x - points[i].x) / 2) * tileSize, tileSize / 2 + (points[i].y - (points[i - 1].y - points[i].y) / 2)  * tileSize);
+            }
+            p.push(point);
+        }
+        return p;
+    }
+
     override public function onmouseup(event :luxe.Input.MouseEvent) {
-        var x = Math.floor(event.x / tileSize);
-        var y = Math.floor(event.y / tileSize);
+        var x = Math.floor((event.x - margin) / tileSize);
+        var y = Math.floor((event.y - margin) / tileSize);
         if (x < 0 || x >= mapWidth || y < 0 || y >= mapHeight) return;
         tiles[y][x].connect = !tiles[y][x].connect;
         calc_colors();
@@ -149,10 +180,10 @@ class PlayState extends State {
         var has_won = true;
         var connections = [];
         for (line in lines) {
-            var number_of_connections = 0;
+            line.connections = 0;
             for (p in line.points) {
                 if (can_visit(p.x, p.y)) {
-                    number_of_connections++;
+                    line.connections++;
                     var tiles = get_connection(p.x, p.y);
                     var color = None;
                     for (tile in tiles) {
@@ -165,7 +196,7 @@ class PlayState extends State {
                     if (color == Invalid || tiles.length != connectionLengths) has_won = false;
                 }
             }
-            if (number_of_connections != line.connections) has_won = false;
+            if (line.connections != line.requiredConnections) has_won = false;
         }
 
         for (connection in connections) {
@@ -193,13 +224,24 @@ class PlayState extends State {
                     Luxe.draw.box({
                         rect: new luxe.Rectangle(x * tileSize + centerOffsetBorder, y * tileSize + centerOffsetBorder, boxSizeBorder, boxSizeBorder),
                         color: new Color(1, 1, 1),
+                        origin: new Vector(-margin, -margin),
                         immediate: true,
                     });
                 }
                 Luxe.draw.box({
                     rect: new luxe.Rectangle(x * tileSize + centerOffset, y * tileSize + centerOffset, boxSize, boxSize),
                     color: convert_color(tiles[y][x].color),
+                    origin: new Vector(-margin, -margin),
                     immediate: true,
+                });
+            }
+        }
+        for (line in lines) {
+            for (c in 0 ... line.requiredConnections) {
+                Luxe.draw.box({
+                    rect: new luxe.Rectangle(line.points[0].x * tileSize + tileSize / 2 - 5, line.points[0].y * tileSize + tileSize / 2 - 25, 10, 10),
+                    color: (line.connections > c ? new Color(1, 1, 1) : convert_color(line.color)),
+                    origin: new Vector(-margin + (-(line.requiredConnections + 1) / 2 + c + 1) * 20, 0)
                 });
             }
         }
