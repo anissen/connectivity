@@ -122,18 +122,11 @@ class PlayState extends State {
         for (line in lines) {
             Luxe.draw.poly({
                 color: convert_color(line.color),
-                points: calculate_line_points(line.points), //[ for (p in line.points) new Vector(tileSize / 2 + p.x * tileSize, tileSize / 2 + p.y * tileSize) ],
+                points: calculate_line_points(line.points),
                 solid : false,
                 origin: new Vector(-margin, -margin),
                 depth: 2
             });
-            // for (c in 0 ... line.connections) {
-            //     Luxe.draw.box({
-            //         rect: new luxe.Rectangle(line.points[0].x * tileSize + tileSize / 2 - 5, line.points[0].y * tileSize + tileSize / 2 - 25, 10, 10),
-            //         color: convert_color(line.color),
-            //         origin: new Vector(-margin + (-(line.connections + 1) / 2 + c + 1) * 20, 0)
-            //     });
-            // }
         }
 
         invalidColor.set(0.4, 0.4, 0.4);
@@ -145,9 +138,11 @@ class PlayState extends State {
         for (i in 0 ... points.length) {
             var point = new Vector(tileSize / 2 + points[i].x * tileSize, tileSize / 2 + points[i].y * tileSize);
             if (i == 0) {
-                point = new Vector(tileSize / 2 + (points[i].x - (points[i + 1].x - points[i].x) / 2) * tileSize, tileSize / 2 + (points[i].y - (points[i + 1].y - points[i].y) / 2)  * tileSize);
+                point.x -= ((points[i + 1].x - points[i].x) / 2) * tileSize;
+                point.y -= ((points[i + 1].y - points[i].y) / 2) * tileSize;
             } else if (i == points.length - 1) {
-                point = new Vector(tileSize / 2 + (points[i].x - (points[i - 1].x - points[i].x) / 2) * tileSize, tileSize / 2 + (points[i].y - (points[i - 1].y - points[i].y) / 2)  * tileSize);
+                point.x -= ((points[i - 1].x - points[i].x) / 2) * tileSize;
+                point.y -= ((points[i - 1].y - points[i].y) / 2) * tileSize;
             }
             p.push(point);
         }
@@ -218,6 +213,23 @@ class PlayState extends State {
                 if (!tiles[y][x].connect) continue;
                 var boxSize = Math.min((tiles[y][x].length / connectionLengths) * tileSize / 2, tileSize / 2);
                 var centerOffset = tileSize / 2 - boxSize / 2;
+
+                // horizontal line
+                Luxe.draw.line({
+                    p0: new Vector(x * tileSize, y * tileSize + tileSize / 2),
+                    p1: new Vector((x + 1) * tileSize, y * tileSize + tileSize / 2),
+                    color: convert_color(tiles[y][x].color),
+                    origin: new Vector(-margin, -margin),
+                    immediate: true
+                });
+                // vertical line
+                Luxe.draw.line({
+                    p0: new Vector(x * tileSize + tileSize / 2, y * tileSize),
+                    p1: new Vector(x * tileSize + tileSize / 2, (y + 1) * tileSize),
+                    color: convert_color(tiles[y][x].color),
+                    origin: new Vector(-margin, -margin),
+                    immediate: true
+                });
                 if (tiles[y][x].color != Invalid && tiles[y][x].length == connectionLengths) {
                     var boxSizeBorder = Math.min((tiles[y][x].length / connectionLengths) * tileSize / 1.8, tileSize / 1.8);
                     var centerOffsetBorder = tileSize / 2 - boxSizeBorder / 2;
@@ -225,14 +237,14 @@ class PlayState extends State {
                         rect: new luxe.Rectangle(x * tileSize + centerOffsetBorder, y * tileSize + centerOffsetBorder, boxSizeBorder, boxSizeBorder),
                         color: new Color(1, 1, 1),
                         origin: new Vector(-margin, -margin),
-                        immediate: true,
+                        immediate: true
                     });
                 }
                 Luxe.draw.box({
                     rect: new luxe.Rectangle(x * tileSize + centerOffset, y * tileSize + centerOffset, boxSize, boxSize),
                     color: convert_color(tiles[y][x].color),
                     origin: new Vector(-margin, -margin),
-                    immediate: true,
+                    immediate: true
                 });
             }
         }
@@ -241,7 +253,8 @@ class PlayState extends State {
                 Luxe.draw.box({
                     rect: new luxe.Rectangle(line.points[0].x * tileSize + tileSize / 2 - 5, line.points[0].y * tileSize + tileSize / 2 - 25, 10, 10),
                     color: (line.connections > c ? new Color(1, 1, 1) : convert_color(line.color)),
-                    origin: new Vector(-margin + (-(line.requiredConnections + 1) / 2 + c + 1) * 20, 0)
+                    origin: new Vector(-margin + (-(line.requiredConnections + 1) / 2 + c + 1) * 20, 0),
+                    immediate: true
                 });
             }
         }

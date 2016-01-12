@@ -16,6 +16,10 @@ class Main extends luxe.Game {
     override function ready() {
         luxe.tween.Actuate.defaultEase = luxe.tween.easing.Quad.easeInOut;
 
+        // Luxe.camera.size = new luxe.Vector(800, 600);
+        Luxe.camera.size = new luxe.Vector(768, 768);
+        Luxe.camera.size_mode = luxe.Camera.SizeMode.contain;
+
         Luxe.renderer.clear_color.set(0.05, 0.05, 0.05);
 
         states = new States({ name: 'state_machine' });
