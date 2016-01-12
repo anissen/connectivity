@@ -44,10 +44,10 @@ class PlayState extends State {
 
     var mapWidth :Int = 5;
     var mapHeight :Int = 5;
-    var tileSize :Int = 128;
+    var tileSize :Float = 128;
     var connectionLengths = 4;
 
-    var margin :Int = 64;
+    var margin :Float = 64;
     var invalidColor :Color;
 
     public function new() {
@@ -55,6 +55,8 @@ class PlayState extends State {
         tiles = [];
         lines = [];
         invalidColor = new Color();
+        tileSize = Math.min(Luxe.screen.w, Luxe.screen.h) / 6;
+        margin = tileSize / 2;
     }
 
     override function init() {
