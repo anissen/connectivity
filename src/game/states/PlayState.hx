@@ -28,6 +28,7 @@ typedef ColorLine = {
     points :Array<{x :Int, y :Int}>,
     requiredConnections :Int,
     connections :Int,
+    completedConnections :Int
 }
 
 typedef Tile = {
@@ -47,6 +48,8 @@ class PlayState extends State {
     var tileSize :Float = 128;
     var connectionLengths = 4;
 
+    // var connectionLines :Array<phoenix.geometry.Geometry>;
+
     var margin :Float = 64;
     var invalidColor :Color;
 
@@ -54,6 +57,7 @@ class PlayState extends State {
         super({ name: StateId });
         tiles = [];
         lines = [];
+        // connectionLines = [];
         invalidColor = new Color();
         tileSize = Math.min(Luxe.screen.w, Luxe.screen.h) / 6;
         margin = tileSize / 2;
@@ -70,6 +74,7 @@ class PlayState extends State {
             color: Blue,
             requiredConnections: 3,
             connections: 0,
+            completedConnections: 0,
             points: [
                 { x: 1, y: 0 },
                 { x: 1, y: 1 },
@@ -85,6 +90,7 @@ class PlayState extends State {
             color: Orange,
             requiredConnections: 1,
             connections: 0,
+            completedConnections: 0,
             points: [
                 { x: 3, y: 0 },
                 { x: 3, y: 1 },
@@ -105,14 +111,13 @@ class PlayState extends State {
                 Luxe.draw.line({
                     p0: new Vector(0, y * tileSize),
                     p1: new Vector(mapWidth * tileSize, y * tileSize),
-                    color: new Color(0.2, 0.2, 0.2),
+                    color: new Color(0.1, 0.1, 0.1),
                     origin: new Vector(-margin, -margin)
                 });
-                var col = 0.2 * Math.random();
                 Luxe.draw.line({
                     p0: new Vector(x * tileSize, 0),
                     p1: new Vector(x * tileSize, mapHeight * tileSize),
-                    color: new Color(0.2, 0.2, 0.2),
+                    color: new Color(0.1, 0.1, 0.1),
                     origin: new Vector(-margin, -margin)
                 });
                 arr.push({ connectType: Unconnected, color: None, length: 0, visited: false });
@@ -184,10 +189,15 @@ class PlayState extends State {
             }
         }
 
+        // for (geo in connectionLines) {
+        //     geo.drop();
+        // }
+
         var has_won = true;
         var connections = [];
         for (line in lines) {
             line.connections = 0;
+            line.completedConnections = 0;
             for (p in line.points) {
                 if (can_visit(p.x, p.y)) {
                     line.connections++;
@@ -198,9 +208,25 @@ class PlayState extends State {
                     }
                     connections.push({
                         color: color,
-                        tiles: tiles
+                        tiles: tiles //[ for (data in tiles_data) data.tile ]
                     });
-                    if (color == Invalid || tiles.length != connectionLengths) has_won = false;
+                    if (color == Invalid || tiles.length != connectionLengths) {
+                        has_won = false;
+                    } else {
+                        line.completedConnections++;
+                    }
+
+                    // for (i in 1 ... tiles_data.length) {
+                    //     var t0 = tiles_data[i - 1];
+                    //     var t1 = tiles_data[i];
+                    //     var geo = Luxe.draw.line({
+                    //         p0: new Vector(t0.x * tileSize + tileSize / 2, t0.y * tileSize + tileSize / 2),
+                    //         p1: new Vector(t1.x * tileSize + tileSize / 2, t1.y * tileSize + tileSize / 2),
+                    //         color: new Color(1,1,1), //convert_color(color),
+                    //         origin: new Vector(-margin, -margin)
+                    //     });
+                    //     connectionLines.push(geo);
+                    // }
                 }
             }
             if (line.connections != line.requiredConnections) has_won = false;
@@ -231,9 +257,12 @@ class PlayState extends State {
         }
         for (line in lines) {
             for (c in 0 ... line.requiredConnections) {
+                var color = convert_color(line.color);
+                if (line.connections <= c) color.a = 0.5;
+                if (line.completedConnections > c) color.set(1, 1, 1);
                 Luxe.draw.box({
                     rect: new luxe.Rectangle(line.points[0].x * tileSize + tileSize / 2 - 5, line.points[0].y * tileSize + tileSize / 2 - 25, 10, 10),
-                    color: (line.connections > c ? new Color(1, 1, 1) : convert_color(line.color)),
+                    color: color,
                     origin: new Vector(-margin + ((line.requiredConnections + 1) / 2 - c - 1) * 20, 0),
                     immediate: true
                 });
@@ -273,7 +302,7 @@ class PlayState extends State {
             Luxe.draw.circle({
                 x: x * tileSize + tileSize / 2,
                 y: y * tileSize +  tileSize / 2,
-                r: tileSize / 4 + 2,
+                r: tileSize / 5 + 2,
                 color: new Color(1, 1, 1),
                 origin: new Vector(-margin, -margin),
                 immediate: true
@@ -288,7 +317,7 @@ class PlayState extends State {
         Luxe.draw.circle({
             x: x * tileSize + tileSize / 2,
             y: y * tileSize +  tileSize / 2,
-            r: tileSize / 4,
+            r: tileSize / 5,
             color: convert_color(tiles[y][x].color),
             origin: new Vector(-margin, -margin),
             immediate: true
@@ -322,6 +351,7 @@ class PlayState extends State {
         return tiles[y][x].connectType == Connected && !tiles[y][x].visited;
     }
 
+    // function get_connection(x: Int, y: Int) :Array<{ tile: Tile, x :Int, y :Int }> {
     function get_connection(x: Int, y: Int) :Array<Tile> {
         if (!can_visit(x, y)) return [];
         tiles[y][x].visited = true;
