@@ -55,12 +55,6 @@ class PlayState extends State {
 
     public function new() {
         super({ name: StateId });
-        tiles = [];
-        lines = [];
-        // connectionLines = [];
-        invalidColor = new Color();
-        tileSize = Math.min(Luxe.screen.w, Luxe.screen.h) / 6;
-        margin = tileSize / 2;
     }
 
     override function init() {
@@ -68,6 +62,13 @@ class PlayState extends State {
     }
 
     function reset(seed :Float) {
+        tiles = [];
+        lines = [];
+        // connectionLines = [];
+        invalidColor = new Color();
+        tileSize = Math.min(Luxe.screen.w, Luxe.screen.h) / 6;
+        margin = tileSize / 2;
+
         Luxe.scene.empty();
 
         lines.push({
@@ -241,7 +242,7 @@ class PlayState extends State {
 
         if (has_won) {
             trace('You won!');
-            // reset(Math.random());
+            reset(Math.random());
         }
     }
 
