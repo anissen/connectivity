@@ -9,6 +9,9 @@ class Main extends luxe.Game {
     static public var states :States;
 
     override function config(config :luxe.AppConfig) {
+        config.preload.jsons.push({ id: 'assets/levels/level0.json' });
+        config.preload.jsons.push({ id: 'assets/levels/level1.json' });
+
         config.render.antialiasing = 4;
         return config;
     }

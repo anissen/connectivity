@@ -9,6 +9,8 @@ import luxe.Visual;
 import luxe.Color;
 import snow.api.Promise;
 
+using Lambda;
+
 enum ConnectColor {
     None;
     Invalid;
@@ -58,46 +60,67 @@ class PlayState extends State {
     }
 
     override function init() {
-        reset(87634.34);
+        reset(0);
     }
 
-    function reset(seed :Float) {
+    function get_lines_from_data(data :Dynamic) :Array<ColorLine> {
+        connectionLengths = data.connection_lengths;
+        mapWidth = data.width;
+        mapHeight = data.height;
+        var lines :Array<ColorLine> = data.lines;
+        for (i in 0 ... lines.length) {
+            var line = lines[i];
+            line.color = switch (i) {
+                case 0: Orange;
+                case 1: Blue;
+                case _: Green;
+            };
+            line.connections = 0;
+            line.completedConnections = 0;
+        }
+        return lines;
+    }
+
+    function reset(level :Int) {
         tiles = [];
         lines = [];
         // connectionLines = [];
         invalidColor = new Color();
-        tileSize = Math.min(Luxe.screen.w, Luxe.screen.h) / 6;
-        margin = tileSize / 2;
 
         Luxe.scene.empty();
 
-        lines.push({
-            color: Blue,
-            requiredConnections: 3,
-            connections: 0,
-            completedConnections: 0,
-            points: [
-                { x: 1, y: 0 },
-                { x: 1, y: 1 },
-                { x: 2, y: 1 },
-                { x: 2, y: 2 },
-                { x: 3, y: 2 },
-                { x: 3, y: 3 },
-                { x: 3, y: 4 }
-            ]
-        });
+        lines = get_lines_from_data(Luxe.resources.json('assets/levels/level${level}.json').asset.json);
 
-        lines.push({
-            color: Orange,
-            requiredConnections: 1,
-            connections: 0,
-            completedConnections: 0,
-            points: [
-                { x: 3, y: 0 },
-                { x: 3, y: 1 },
-                { x: 4, y: 1 }
-            ]
-        });
+        tileSize = Math.min(Luxe.screen.w, Luxe.screen.h) / (Math.max(mapWidth, mapHeight) + 1 /* margin */);
+        margin = tileSize / 2;
+
+        // lines.push({
+        //     color: Blue,
+        //     requiredConnections: 3,
+        //     connections: 0,
+        //     completedConnections: 0,
+        //     points: [
+        //         { x: 1, y: 0 },
+        //         { x: 1, y: 1 },
+        //         { x: 2, y: 1 },
+        //         { x: 2, y: 2 },
+        //         { x: 3, y: 2 },
+        //         { x: 3, y: 3 },
+        //         { x: 3, y: 4 }
+        //     ]
+        // });
+        //
+        // lines.push({
+        //     color: Orange,
+        //     requiredConnections: 1,
+        //     connections: 0,
+        //     completedConnections: 0,
+        //     points: [
+        //         { x: 3, y: 0 },
+        //         { x: 3, y: 1 },
+        //         { x: 4, y: 1 }
+        //     ]
+        // });
 
         Luxe.draw.box({
             rect: new luxe.Rectangle(0, 0, mapWidth * tileSize, mapHeight * tileSize),
@@ -136,7 +159,7 @@ class PlayState extends State {
         for (line in lines) {
             Luxe.draw.poly({
                 color: convert_color(line.color),
-                points: calculate_line_points(line.points),
+                points: line.points.map(function(tile) { return clamp_to_map(pos_from_tile(tile.x, tile.y)); }),
                 solid : false,
                 origin: new Vector(-margin, -margin),
                 depth: 2
@@ -147,27 +170,27 @@ class PlayState extends State {
         invalidColor.tween(0.6, { r: 0.8, g: 0.8, b: 0.8 }).reflect().repeat();
     }
 
-    function calculate_line_points(points :Array<{x :Int, y :Int}>) {
-        var p = [];
-        for (i in 0 ... points.length) {
-            var point = new Vector(tileSize / 2 + points[i].x * tileSize, tileSize / 2 + points[i].y * tileSize);
-            if (i == 0) {
-                point.x -= ((points[i + 1].x - points[i].x) / 2) * tileSize;
-                point.y -= ((points[i + 1].y - points[i].y) / 2) * tileSize;
-            } else if (i == points.length - 1) {
-                point.x -= ((points[i - 1].x - points[i].x) / 2) * tileSize;
-                point.y -= ((points[i - 1].y - points[i].y) / 2) * tileSize;
-            }
-            p.push(point);
-        }
-        return p;
+    // TODO: Write pos_from_tile and tile_from_pos functions
+
+    function clamp_to_map(v :Vector) {
+        return new Vector(luxe.utils.Maths.clamp(v.x, 0, mapWidth * tileSize), luxe.utils.Maths.clamp(v.y, 0, mapHeight * tileSize));
+    }
+
+    function pos_from_tile(x :Int, y :Int) {
+        return new Vector(tileSize / 2 + x * tileSize, tileSize / 2 + y * tileSize);
+    }
+
+    function tile_from_pos(pos :Vector) :Null<{x :Int, y :Int}> {
+        var x = Math.floor((pos.x - margin) / tileSize);
+        var y = Math.floor((pos.y - margin) / tileSize);
+        if (x < 0 || x >= mapWidth || y < 0 || y >= mapHeight) return null;
+        return { x: x, y: y };
     }
 
     override public function onmouseup(event :luxe.Input.MouseEvent) {
-        var x = Math.floor((event.x - margin) / tileSize);
-        var y = Math.floor((event.y - margin) / tileSize);
-        if (x < 0 || x >= mapWidth || y < 0 || y >= mapHeight) return;
-        tiles[y][x].connectType = switch (tiles[y][x].connectType) {
+        var tile = tile_from_pos(event.pos);
+        if (tile == null) return;
+        tiles[tile.y][tile.x].connectType = switch (tiles[tile.y][tile.x].connectType) {
             case Unconnected: Connected;
             case Connected: Unconnected;
             case Marked: Unconnected;
@@ -186,6 +209,7 @@ class PlayState extends State {
 
         for (line in lines) {
             for (p in line.points) {
+                if (!inside_map(p.x, p.y)) continue;
                 tiles[p.y][p.x].color = line.color;
             }
         }
@@ -242,7 +266,7 @@ class PlayState extends State {
 
         if (has_won) {
             trace('You won!');
-            reset(Math.random());
+            reset(1);
         }
     }
 
@@ -346,9 +370,12 @@ class PlayState extends State {
         });
     }
 
+    function inside_map(x :Int, y :Int) {
+        return (x >= 0 && x < mapWidth && y >= 0 && y < mapHeight);
+    }
+
     function can_visit(x :Int, y :Int) :Bool {
-        if (x < 0 || x >= mapWidth) return false;
-        if (y < 0 || y >= mapHeight) return false;
+        if (!inside_map(x, y)) return false;
         return tiles[y][x].connectType == Connected && !tiles[y][x].visited;
     }
 
@@ -385,7 +412,7 @@ class PlayState extends State {
 
     override public function onkeyup(event :luxe.Input.KeyEvent) {
         switch (event.keycode) {
-            case luxe.Input.Key.key_r: reset(1000 * Math.random());
+            case luxe.Input.Key.key_r: reset(0);
             case luxe.Input.Key.kp_minus: Luxe.camera.zoom -= 0.05;
             case luxe.Input.Key.kp_period: Luxe.camera.zoom += 0.05;
         }
