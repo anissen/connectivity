@@ -94,76 +94,77 @@ class PlayState extends State {
         tileSize = Math.min(Luxe.screen.w, Luxe.screen.h) / (Math.max(mapWidth, mapHeight) + 1 /* margin */);
         margin = tileSize / 2;
 
-        // lines.push({
-        //     color: Blue,
-        //     requiredConnections: 3,
-        //     connections: 0,
-        //     completedConnections: 0,
-        //     points: [
-        //         { x: 1, y: 0 },
-        //         { x: 1, y: 1 },
-        //         { x: 2, y: 1 },
-        //         { x: 2, y: 2 },
-        //         { x: 3, y: 2 },
-        //         { x: 3, y: 3 },
-        //         { x: 3, y: 4 }
-        //     ]
+        // Luxe.draw.box({
+        //     rect: new luxe.Rectangle(0, 0, mapWidth * tileSize, mapHeight * tileSize),
+        //     color: new Color(0.0667, 0.0667, 0.0667),
+        //     origin: new Vector(-margin, -margin),
+        //     depth: -1
         // });
-        //
-        // lines.push({
-        //     color: Orange,
-        //     requiredConnections: 1,
-        //     connections: 0,
-        //     completedConnections: 0,
-        //     points: [
-        //         { x: 3, y: 0 },
-        //         { x: 3, y: 1 },
-        //         { x: 4, y: 1 }
-        //     ]
-        // });
-
-        Luxe.draw.box({
-            rect: new luxe.Rectangle(0, 0, mapWidth * tileSize, mapHeight * tileSize),
-            color: new Color(0.0667, 0.0667, 0.0667),
-            origin: new Vector(-margin, -margin),
-            depth: -1
-        });
 
         for (y in 0 ... mapHeight) {
             var arr = [];
+            // Luxe.draw.line({
+            //     p0: new Vector(0, y * tileSize),
+            //     p1: new Vector(mapWidth * tileSize, y * tileSize),
+            //     color: new Color(0.1, 0.1, 0.1),
+            //     origin: new Vector(-margin, -margin)
+            // });
             for (x in 0 ... mapWidth) {
-                Luxe.draw.line({
-                    p0: new Vector(0, y * tileSize),
-                    p1: new Vector(mapWidth * tileSize, y * tileSize),
-                    color: new Color(0.1, 0.1, 0.1),
-                    origin: new Vector(-margin, -margin)
-                });
-                Luxe.draw.line({
-                    p0: new Vector(x * tileSize, 0),
-                    p1: new Vector(x * tileSize, mapHeight * tileSize),
-                    color: new Color(0.1, 0.1, 0.1),
-                    origin: new Vector(-margin, -margin)
-                });
+                // Luxe.draw.line({
+                //     p0: new Vector(x * tileSize, 0),
+                //     p1: new Vector(x * tileSize, mapHeight * tileSize),
+                //     color: new Color(0.1, 0.1, 0.1),
+                //     origin: new Vector(-margin, -margin)
+                // });
                 arr.push({ connectType: Unconnected, color: None, length: 0, visited: false });
             }
             tiles.push(arr);
         }
 
-        Luxe.draw.rectangle({
-            rect: new luxe.Rectangle(0, 0, mapWidth * tileSize, mapHeight * tileSize),
-            color: new Color(0.3, 0.3, 0.3),
-            origin: new Vector(-margin, -margin)
-        });
+        // Luxe.draw.rectangle({
+        //     rect: new luxe.Rectangle(0, 0, mapWidth * tileSize, mapHeight * tileSize),
+        //     color: new Color(0.3, 0.3, 0.3),
+        //     origin: new Vector(-margin, -margin)
+        // });
 
         Luxe.renderer.state.lineWidth(4);
         for (line in lines) {
-            Luxe.draw.poly({
-                color: convert_color(line.color),
-                points: line.points.map(function(tile) { return clamp_to_map(pos_from_tile(tile.x, tile.y)); }),
-                solid : false,
-                origin: new Vector(-margin, -margin),
-                depth: 2
-            });
+            // Luxe.draw.poly({
+            //     color: convert_color(line.color),
+            //     points: line.points.map(function(tile) { return clamp_to_map(pos_from_tile(tile.x, tile.y)); }),
+            //     solid : false,
+            //     origin: new Vector(-margin, -margin),
+            //     depth: 2
+            // });
+
+            for (i in 1 ... line.points.length - 1) {
+                var p_before = line.points[i - 1];
+                var p = line.points[i];
+                var p_after = line.points[i + 1];
+
+                var line_horizontal = (p_before.x == p_after.x);
+                var line_vertical = (p_before.y == p_after.y);
+                var rotation = line_horizontal ? 1 : 0;
+                var is_line = line_horizontal || line_vertical;
+
+                if (!is_line) {
+                    if (p_before.x == p.x) {
+                        rotation = (p_before.y < p.y) ? ((p_after.x > p.x) ? 2 : 3) : ((p_after.x > p.x) ? 3 : 2);
+                    } else if (p_before.y == p.y) {
+                        rotation = (p_before.x > p.x) ? ((p_after.y > p.y) ? 1 : 0) : ((p_after.y > p.y) ? 0 : 1);
+                    }
+                }
+
+                var sprite = new luxe.Sprite({
+                    pos: new Vector(margin + p.x * tileSize + tileSize / 2, margin + p.y * tileSize + tileSize / 2),
+                    color: convert_color(line.color),
+                    // origin: new Vector(-margin, -margin),
+                    size: new Vector(tileSize, tileSize),
+                    texture: Luxe.resources.texture(is_line ? 'assets/images/line.png' : 'assets/images/turn.png'),
+                    rotation_z: rotation * 90,
+                    depth: -1
+                });
+            }
         }
 
         invalidColor.set(0.4, 0.4, 0.4);
@@ -412,7 +413,9 @@ class PlayState extends State {
 
     override public function onkeyup(event :luxe.Input.KeyEvent) {
         switch (event.keycode) {
-            case luxe.Input.Key.key_r: reset(0);
+            case luxe.Input.Key.key_0: reset(0);
+            case luxe.Input.Key.key_1: reset(1);
+            case luxe.Input.Key.key_2: reset(2);
             case luxe.Input.Key.kp_minus: Luxe.camera.zoom -= 0.05;
             case luxe.Input.Key.kp_period: Luxe.camera.zoom += 0.05;
         }
