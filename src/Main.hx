@@ -11,6 +11,7 @@ class Main extends luxe.Game {
     override function config(config :luxe.AppConfig) {
         config.preload.textures.push({ id: 'assets/images/line.png' });
         config.preload.textures.push({ id: 'assets/images/turn.png' });
+        config.preload.textures.push({ id: 'assets/images/dot.png' });
 
         config.preload.jsons.push({ id: 'assets/levels/level0.json' });
         config.preload.jsons.push({ id: 'assets/levels/level1.json' });

@@ -116,6 +116,14 @@ class PlayState extends State {
                 //     color: new Color(0.1, 0.1, 0.1),
                 //     origin: new Vector(-margin, -margin)
                 // });
+                var sprite = new luxe.Sprite({
+                    pos: new Vector(margin + x * tileSize + tileSize / 2, margin + y * tileSize + tileSize / 2),
+                    color: new Color(0.1, 0.1, 0.1),
+                    // origin: new Vector(-margin, -margin),
+                    size: new Vector(tileSize, tileSize),
+                    texture: Luxe.resources.texture('assets/images/dot.png'),
+                    depth: -2
+                });
                 arr.push({ connectType: Unconnected, color: None, length: 0, visited: false });
             }
             tiles.push(arr);
