@@ -143,7 +143,7 @@ class PlayState extends State {
         //     origin: new Vector(-margin, -margin)
         // });
 
-        Luxe.renderer.state.lineWidth(4);
+        Luxe.renderer.state.lineWidth(6);
         for (line in lines) {
             // Luxe.draw.poly({
             //     color: convert_color(line.color),
@@ -368,7 +368,7 @@ class PlayState extends State {
                 x: x * tileSize + tileSize / 2,
                 y: y * tileSize +  tileSize / 2,
                 r: tileSize / 5 + 2,
-                color: (complete ? new Color(0, 0, 0) : new Color(1, 1, 1)),
+                color: (complete ? new Color(1, 1, 1) : new Color(0, 0, 0)),
                 origin: new Vector(-margin, -margin),
                 immediate: true
             });
@@ -387,6 +387,16 @@ class PlayState extends State {
             origin: new Vector(-margin, -margin),
             immediate: true
         });
+        if (tiles[y][x].length < connectionLengths) {
+            Luxe.draw.circle({
+                x: x * tileSize + tileSize / 2,
+                y: y * tileSize +  tileSize / 2,
+                r: (tileSize / 5) - (tileSize / 5) * (tiles[y][x].length / connectionLengths),
+                color: new Color(0, 0, 0),
+                origin: new Vector(-margin, -margin),
+                immediate: true
+            });
+        }
     }
 
     function draw_mark(x :Int, y :Int) {
