@@ -27,7 +27,7 @@ class Main extends luxe.Game {
         // Luxe.camera.size = new luxe.Vector(768, 768);
         // Luxe.camera.size_mode = luxe.Camera.SizeMode.contain;
 
-        Luxe.renderer.clear_color.set(0.05, 0.05, 0.05);
+        Luxe.renderer.clear_color.set(1, 1, 1);
 
         states = new States({ name: 'state_machine' });
         states.add(new PlayState());
