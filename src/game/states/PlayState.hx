@@ -312,22 +312,48 @@ class PlayState extends State {
         var boxSize = Math.min((tiles[y][x].length / connectionLengths) * tileSize / 2, tileSize / 2);
         var centerOffset = tileSize / 2 - boxSize / 2;
 
-        // // horizontal line
-        // Luxe.draw.line({
-        //     p0: new Vector(x * tileSize, y * tileSize + tileSize / 2),
-        //     p1: new Vector((x + 1) * tileSize, y * tileSize + tileSize / 2),
-        //     color: convert_color(tiles[y][x].color),
-        //     origin: new Vector(-margin, -margin),
-        //     immediate: true
-        // });
+        var connectedLineColor = convert_color(tiles[y][x].color).toColorHSV();
+        connectedLineColor.v *= 0.8;
+
+        // horizontal line
+        if (x > 0 && tiles[y][x-1].connectType == Connected) {
+            Luxe.draw.line({
+                p0: new Vector(x * tileSize, y * tileSize + tileSize / 2),
+                p1: new Vector(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2),
+                color: connectedLineColor,
+                origin: new Vector(-margin, -margin),
+                immediate: true
+            });
+        }
+        if (x < mapWidth - 1 && tiles[y][x+1].connectType == Connected) {
+            Luxe.draw.line({
+                p0: new Vector(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2),
+                p1: new Vector(x * tileSize + tileSize, y * tileSize + tileSize / 2),
+                color: connectedLineColor,
+                origin: new Vector(-margin, -margin),
+                immediate: true
+            });
+        }
+
         // // vertical line
-        // Luxe.draw.line({
-        //     p0: new Vector(x * tileSize + tileSize / 2, y * tileSize),
-        //     p1: new Vector(x * tileSize + tileSize / 2, (y + 1) * tileSize),
-        //     color: convert_color(tiles[y][x].color),
-        //     origin: new Vector(-margin, -margin),
-        //     immediate: true
-        // });
+        if (y > 0 && tiles[y-1][x].connectType == Connected) {
+            Luxe.draw.line({
+                p0: new Vector(x * tileSize + tileSize / 2, y * tileSize),
+                p1: new Vector(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2),
+                color: connectedLineColor,
+                origin: new Vector(-margin, -margin),
+                immediate: true
+            });
+        }
+        if (y < mapHeight - 1 && tiles[y+1][x].connectType == Connected) {
+            Luxe.draw.line({
+                p0: new Vector(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2),
+                p1: new Vector(x * tileSize + tileSize / 2, y * tileSize + tileSize),
+                color: connectedLineColor,
+                origin: new Vector(-margin, -margin),
+                immediate: true
+            });
+        }
         { // border
             var boxSizeBorder = Math.min((tiles[y][x].length / connectionLengths) * tileSize / 1.8, tileSize / 1.8);
             var centerOffsetBorder = tileSize / 2 - boxSizeBorder / 2;
