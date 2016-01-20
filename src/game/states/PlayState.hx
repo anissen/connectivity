@@ -21,7 +21,7 @@ enum ConnectColor {
 enum ConnectType {
     Unconnected;
     Connected;
-    Marked;
+    // Marked;
 }
 
 typedef ColorLine = {
@@ -94,7 +94,7 @@ class PlayState extends State {
         for (y in 0 ... mapHeight) {
             var arr = [];
             for (x in 0 ... mapWidth) {
-                var sprite = new luxe.Sprite({
+                new luxe.Sprite({
                     pos: new Vector(margin + x * tileSize + tileSize / 2, margin + y * tileSize + tileSize / 2),
                     color: new Color(0.9, 0.9, 0.9),
                     size: new Vector(tileSize, tileSize),
@@ -159,9 +159,21 @@ class PlayState extends State {
         tiles[tile.y][tile.x].connectType = switch (tiles[tile.y][tile.x].connectType) {
             case Unconnected: Connected;
             case Connected: Unconnected;
-            case Marked: Unconnected;
+            // case Marked: Unconnected;
         };
         calc_colors();
+        if (tiles[tile.y][tile.x].connectType == Connected) {
+            // var circle = new luxe.Sprite({
+            //     pos: new Vector(margin + tile.x * tileSize + tileSize / 2, margin + tile.y * tileSize + tileSize / 2),
+            //     color: convert_color(tiles[tile.y][tile.x].color),
+            //     size: new Vector(tileSize, tileSize),
+            //     texture: Luxe.resources.texture('assets/images/circle.png'),
+            //     depth: -3
+            // });
+            // circle.add(new game.components.PopIn());
+            var valid = (tiles[tile.y][tile.x].color != Invalid);
+            Luxe.camera.shake(valid ? 1 : 5);
+        }
     }
 
     function calc_colors() {
