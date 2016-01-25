@@ -138,9 +138,9 @@ class PlayState extends State {
         }
     }
 
-    function clamp_to_map(v :Vector) {
-        return new Vector(luxe.utils.Maths.clamp(v.x, 0, mapWidth * tileSize), luxe.utils.Maths.clamp(v.y, 0, mapHeight * tileSize));
-    }
+    // function clamp_to_map(v :Vector) {
+    //     return new Vector(luxe.utils.Maths.clamp(v.x, 0, mapWidth * tileSize), luxe.utils.Maths.clamp(v.y, 0, mapHeight * tileSize));
+    // }
 
     function pos_from_tile(x :Int, y :Int) {
         return new Vector(tileSize / 2 + x * tileSize, tileSize / 2 + y * tileSize);
@@ -243,16 +243,21 @@ class PlayState extends State {
         }
         for (line in lines) {
             for (c in 0 ... line.requiredConnections) {
-                var color = convert_color(line.color);
-                if (line.connections <= c) color.a = 0.5;
-                if (line.completedConnections > c) color.set(0, 0, 0);
-                Luxe.draw.box({
-                    rect: new luxe.Rectangle(line.points[0].x * tileSize + tileSize / 2 - 5, line.points[0].y * tileSize + tileSize / 2 - 25, 10, 10),
-                    color: color,
-                    origin: new Vector(-margin + ((line.requiredConnections + 1) / 2 - c - 1) * 20, 0),
-                    immediate: true,
-                    depth: 1
-                });
+                var color = new Color(0, 0, 0);
+                if (line.connections <= c) color = convert_color(line.color);
+                if (line.completedConnections > c) color.set(1, 1, 1);
+                var positions = [line.points[0], line.points[line.points.length - 1]];
+                var displacement =  ((line.requiredConnections + 1) / 2 - c - 1) * 20;
+                for (p in positions) {
+                    var vertical = (p.y == -1 || p.y == mapHeight);
+                    Luxe.draw.box({
+                        rect: new luxe.Rectangle(p.x * tileSize + tileSize / 2 + (p.x == -1 ? tileSize / 4 : 0), p.y * tileSize + tileSize / 2 - (p.y == mapHeight ? tileSize / 4 : 0), 10, 10),
+                        color: color,
+                        origin: new Vector(-margin + (vertical ? displacement : 0), -margin + (!vertical ? displacement : 0)),
+                        immediate: true,
+                        depth: 1
+                    });
+                }
             }
         }
     }
