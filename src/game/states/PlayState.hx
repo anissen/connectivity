@@ -53,7 +53,7 @@ class PlayState extends State {
     var margin :Float = 64;
     var invalidColor :Color;
 
-    var tween_speed :Float = 0.3;
+    var tween_speed :Float = 0.2;
 
     public function new() {
         super({ name: StateId });
@@ -97,13 +97,6 @@ class PlayState extends State {
         for (y in 0 ... mapHeight) {
             var arr = [];
             for (x in 0 ... mapWidth) {
-                // new luxe.Sprite({
-                //     pos: new Vector(margin + x * tileSize + tileSize / 2, margin + y * tileSize + tileSize / 2),
-                //     color: new Color(0.9, 0.9, 0.9),
-                //     size: new Vector(tileSize, tileSize),
-                //     texture: Luxe.resources.texture('assets/images/dot.png'),
-                //     depth: -3
-                // });
                 var sprite = new luxe.Sprite({
                     pos: new Vector(margin + x * tileSize + tileSize / 2, margin + y * tileSize + tileSize / 2),
                     color: new Color(1, 1, 1),
@@ -151,14 +144,6 @@ class PlayState extends State {
         calc_colors();
     }
 
-    // function clamp_to_map(v :Vector) {
-    //     return new Vector(luxe.utils.Maths.clamp(v.x, 0, mapWidth * tileSize), luxe.utils.Maths.clamp(v.y, 0, mapHeight * tileSize));
-    // }
-
-    // function pos_from_tile_pos(x :Int, y :Int) {
-    //     return new Vector(tileSize / 2 + x * tileSize, tileSize / 2 + y * tileSize);
-    // }
-
     function tile_pos_from_pos(pos :Vector) :Null<{x :Int, y :Int}> {
         var x = Math.floor((pos.x - margin) / tileSize);
         var y = Math.floor((pos.y - margin) / tileSize);
@@ -174,20 +159,12 @@ class PlayState extends State {
         tile.connectType = switch (tile.connectType) {
             case Unconnected: Connected;
             case Connected: Unconnected;
-            // case Marked: Unconnected;
         };
 
         calc_colors();
 
         if (tile.connectType == Connected) {
             if (tile.color == Invalid) Luxe.camera.shake(5);
-            // var c = convert_color(tile.color);
-            // tile.sprite.color.tween(tween_speed, { r: c.r, g: c.g, b: c.b, a: 1 });
-            // luxe.tween.Actuate.tween(tile.sprite.scale, tween_speed, { x: 1, y: 1});
-        } else if (tile.connectType == Unconnected) {
-            // var c = convert_color(tile.color);
-            // tile.sprite.color.tween(tween_speed, { r: c.r, g: c.g, b: c.b, a: 0.3 });
-            // luxe.tween.Actuate.tween(tile.sprite.scale, tween_speed, { x: 0.3, y: 0.3});
         }
     }
 
@@ -247,11 +224,16 @@ class PlayState extends State {
                 var tile = tiles[y][x];
                 var connected = (tile.connectType == Connected);
 
-                var color = convert_color(connected ? tile.color : None);
-                var changedColor = color.toColorHSV();
-                changedColor.v *= 0.8;
-                var alpha = (connected ? 1 : 0.1);
-                tile.sprite.color.tween(tween_speed, { r: changedColor.r, g: changedColor.g, b: changedColor.b, a: alpha });
+                if (tile.color == Invalid) {
+                    tile.sprite.color = invalidColor;
+                } else {
+                    var color = convert_color(connected ? tile.color : None);
+                    var changedColor = color.toColorHSV();
+                    changedColor.v *= 0.8;
+                    var alpha = (connected ? 1 : 0.1);
+                    tile.sprite.color = tile.sprite.color.clone(); // to get rid of invalidColor
+                    tile.sprite.color.tween(tween_speed, { r: changedColor.r, g: changedColor.g, b: changedColor.b, a: alpha });
+                }
 
                 var scale_size = (connected ? 1 : 0.3);
                 luxe.tween.Actuate.tween(tile.sprite.scale, tween_speed, { x: scale_size, y: scale_size});
@@ -340,37 +322,6 @@ class PlayState extends State {
                 immediate: true
             });
         }
-        // { // border
-        //     var boxSizeBorder = Math.min((tiles[y][x].length / connectionLengths) * tileSize / 1.8, tileSize / 1.8);
-        //     var centerOffsetBorder = tileSize / 2 - boxSizeBorder / 2;
-        //     var complete = (tiles[y][x].color != Invalid && tiles[y][x].length == connectionLengths);
-        //     Luxe.draw.circle({
-        //         x: x * tileSize + tileSize / 2,
-        //         y: y * tileSize +  tileSize / 2,
-        //         r: tileSize / 5 + 2,
-        //         color: (complete ? new Color(1, 1, 1) : new Color(0, 0, 0)),
-        //         origin: new Vector(-margin, -margin),
-        //         immediate: true
-        //     });
-        // }
-        // Luxe.draw.circle({
-        //     x: x * tileSize + tileSize / 2,
-        //     y: y * tileSize +  tileSize / 2,
-        //     r: tileSize / 5,
-        //     color: convert_color(tiles[y][x].color),
-        //     origin: new Vector(-margin, -margin),
-        //     immediate: true
-        // });
-        // if (tiles[y][x].length < connectionLengths) { // draw center dot
-        //     Luxe.draw.circle({
-        //         x: x * tileSize + tileSize / 2,
-        //         y: y * tileSize +  tileSize / 2,
-        //         r: (tileSize / 5) - (tileSize / 5) * (tiles[y][x].length / connectionLengths),
-        //         color: new Color(0, 0, 0),
-        //         origin: new Vector(-margin, -margin),
-        //         immediate: true
-        //     });
-        // }
     }
 
     function inside_map(x :Int, y :Int) {
