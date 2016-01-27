@@ -29,7 +29,8 @@ typedef ColorLine = {
     points :Array<{x :Int, y :Int}>,
     requiredConnections :Int,
     connections :Int,
-    completedConnections :Int
+    completedConnections :Int,
+    sprites :Array<luxe.Sprite>
 }
 
 typedef Tile = {
@@ -84,6 +85,7 @@ class PlayState extends State {
             };
             line.connections = 0;
             line.completedConnections = 0;
+            line.sprites = [];
         }
         return lines;
     }
@@ -138,7 +140,7 @@ class PlayState extends State {
                     }
                 }
 
-                new luxe.Sprite({
+                var sprite = new luxe.Sprite({
                     pos: new Vector(margin + p.x * tileSize + tileSize / 2, margin + p.y * tileSize + tileSize / 2),
                     color: convert_color(line.color),
                     size: new Vector(tileSize, tileSize),
@@ -146,6 +148,7 @@ class PlayState extends State {
                     rotation_z: rotation * 90,
                     depth: -2
                 });
+                line.sprites.push(sprite);
             }
         }
 
@@ -180,6 +183,19 @@ class PlayState extends State {
             emitter.start_color = convert_color(tile.color);
             particleSystem.pos = pos_from_tile_pos(tile_pos.x, tile_pos.y);
             particleSystem.start(1);
+
+            for (line in lines) {
+                for (sprite in line.sprites) {
+                    if (line.color == tile.color) {
+                        var color = convert_color(line.color);
+                        var changedColor = color.toColorHSV();
+                        changedColor.v *= 0.9;
+                        sprite.color.tween(tween_speed, { r: changedColor.r, g: changedColor.g, b: changedColor.b }).reflect().repeat(1);
+
+                        luxe.tween.Actuate.tween(sprite.scale, tween_speed, { x: 1.02, y: 1.02 }).reflect().repeat(1);
+                    }
+                }
+            }
         }
     }
 
