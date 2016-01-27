@@ -55,6 +55,9 @@ class PlayState extends State {
 
     var tween_speed :Float = 0.2;
 
+    var particleSystem :luxe.Particles.ParticleSystem;
+    var emitter :luxe.Particles.ParticleEmitter;
+
     public function new() {
         super({ name: StateId });
     }
@@ -86,7 +89,12 @@ class PlayState extends State {
     }
 
     function reset(level :Int) {
+        if (particleSystem != null) particleSystem.stop();
+
         Luxe.scene.empty();
+
+        var ps_data = Luxe.resources.json('assets/particle_systems/fireworks.json').asset.json;
+        particleSystem = load_particle_system(ps_data);
 
         tiles = [];
         lines = get_lines_from_data(Luxe.resources.json('assets/levels/level${level}.json').asset.json);
@@ -144,6 +152,10 @@ class PlayState extends State {
         calc_colors();
     }
 
+    function pos_from_tile_pos(x :Int, y :Int) {
+        return new Vector(margin + tileSize / 2 + x * tileSize, margin + tileSize / 2 + y * tileSize);
+    }
+
     function tile_pos_from_pos(pos :Vector) :Null<{x :Int, y :Int}> {
         var x = Math.floor((pos.x - margin) / tileSize);
         var y = Math.floor((pos.y - margin) / tileSize);
@@ -164,7 +176,10 @@ class PlayState extends State {
         calc_colors();
 
         if (tile.connectType == Connected) {
-            if (tile.color == Invalid) Luxe.camera.shake(5);
+            Luxe.camera.shake((tile.color == Invalid) ? 5 : 1);
+            emitter.start_color = convert_color(tile.color);
+            particleSystem.pos = pos_from_tile_pos(tile_pos.x, tile_pos.y);
+            particleSystem.start(1);
         }
     }
 
@@ -361,6 +376,43 @@ class PlayState extends State {
         if (color1 == None) return color2;
         if (color2 == None) return color1;
         return Invalid;
+    }
+
+    function load_particle_system(json :Dynamic) :luxe.Particles.ParticleSystem {
+        var emitter_template :luxe.options.ParticleOptions.ParticleEmitterOptions = {
+            name: 'template',
+            emit_time: json.emit_time,
+            emit_count: json.emit_count,
+            direction: json.direction,
+            direction_random: json.direction_random,
+            speed: json.speed,
+            speed_random: json.speed_random,
+            end_speed: json.end_speed,
+            life: json.life,
+            life_random: json.life_random,
+            rotation: json.zrotation,
+            rotation_random: json.rotation_random,
+            end_rotation: json.end_rotation,
+            end_rotation_random: json.end_rotation_random,
+            rotation_offset: json.rotation_offset,
+            pos_offset: new Vector(json.pos_offset.x, json.pos_offset.y),
+            pos_random: new Vector(json.pos_random.x, json.pos_random.y),
+            gravity: new Vector(json.gravity.x, json.gravity.y),
+            start_size: new Vector(json.start_size.x, json.start_size.y),
+            start_size_random: new Vector(json.start_size_random.x, json.start_size_random.y),
+            end_size: new Vector(json.end_size.x, json.end_size.y),
+            end_size_random: new Vector(json.end_size_random.x, json.end_size_random.y),
+            start_color: new Color(json.start_color.r, json.start_color.g, json.start_color.b, json.start_color.a),
+            end_color: new Color(json.end_color.r, json.end_color.g, json.end_color.b, json.end_color.a),
+            depth: -0.5 // below circles
+        };
+        emitter_template.particle_image = Luxe.resources.texture('assets/images/circle.png');
+
+        var particles = new luxe.Particles.ParticleSystem({ name: 'particles' });
+        particles.add_emitter(emitter_template);
+        emitter = particles.emitters.get('template');
+        particles.stop();
+        return particles;
     }
 
     override public function onkeyup(event :luxe.Input.KeyEvent) {

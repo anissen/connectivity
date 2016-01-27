@@ -13,6 +13,8 @@ class Main extends luxe.Game {
         config.preload.textures.push({ id: 'assets/images/turn.png' });
         config.preload.textures.push({ id: 'assets/images/circle.png' });
 
+        config.preload.jsons.push({ id: 'assets/particle_systems/fireworks.json' });
+
         config.preload.jsons.push({ id: 'assets/levels/level0.json' });
         config.preload.jsons.push({ id: 'assets/levels/level1.json' });
 
