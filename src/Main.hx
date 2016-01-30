@@ -30,6 +30,7 @@ class Main extends luxe.Game {
 
         states = new States({ name: 'state_machine' });
         states.add(new PlayState());
+        states.add(new EditState());
         states.set(PlayState.StateId);
     }
 

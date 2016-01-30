@@ -440,6 +440,7 @@ class PlayState extends State {
             case luxe.Input.Key.key_2: reset(2);
             case luxe.Input.Key.kp_minus: Luxe.camera.zoom -= 0.05;
             case luxe.Input.Key.kp_period: Luxe.camera.zoom += 0.05;
+            case luxe.Input.Key.key_d: Main.states.enabled(EditState.StateId) ? Main.states.disable(EditState.StateId) : Main.states.enable(EditState.StateId);
         }
     }
 }
