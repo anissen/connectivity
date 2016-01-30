@@ -17,6 +17,7 @@ class Main extends luxe.Game {
 
         config.preload.jsons.push({ id: 'assets/levels/level0.json' });
         config.preload.jsons.push({ id: 'assets/levels/level1.json' });
+        config.preload.jsons.push({ id: 'assets/levels/level2.json' });
 
         config.render.antialiasing = 4;
         return config;

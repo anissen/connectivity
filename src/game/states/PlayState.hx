@@ -54,10 +54,12 @@ class PlayState extends State {
     var margin :Float = 64;
     var invalidColor :Color;
 
-    var tween_speed :Float = 0.2;
+    var tween_speed :Float = 0.25;
 
     var particleSystem :luxe.Particles.ParticleSystem;
     var emitter :luxe.Particles.ParticleEmitter;
+
+    var levelIndex :Int = 0;
 
     public function new() {
         super({ name: StateId });
@@ -91,6 +93,7 @@ class PlayState extends State {
     }
 
     function reset(level :Int) {
+        levelIndex = level;
         if (particleSystem != null) particleSystem.stop();
 
         Luxe.scene.empty();
@@ -109,7 +112,7 @@ class PlayState extends State {
             for (x in 0 ... mapWidth) {
                 var sprite = new luxe.Sprite({
                     pos: new Vector(margin + x * tileSize + tileSize / 2, margin + y * tileSize + tileSize / 2),
-                    color: new Color(1, 1, 1),
+                    color: new Color(1, 1, 1, 0),
                     size: new Vector(tileSize, tileSize),
                     scale: new Vector(0, 0),
                     texture: Luxe.resources.texture('assets/images/circle.png'),
@@ -272,8 +275,7 @@ class PlayState extends State {
         }
 
         if (has_won) {
-            trace('You won!');
-            reset(1);
+            reset(levelIndex + 1);
         }
     }
 
@@ -420,7 +422,7 @@ class PlayState extends State {
             end_size_random: new Vector(json.end_size_random.x, json.end_size_random.y),
             start_color: new Color(json.start_color.r, json.start_color.g, json.start_color.b, json.start_color.a),
             end_color: new Color(json.end_color.r, json.end_color.g, json.end_color.b, json.end_color.a),
-            depth: -0.5 // below circles
+            //depth: -0.5 // below circles
         };
         emitter_template.particle_image = Luxe.resources.texture('assets/images/circle.png');
 
