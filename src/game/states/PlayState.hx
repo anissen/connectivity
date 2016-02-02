@@ -74,7 +74,8 @@ class PlayState extends State {
     function load_level(data :Dynamic) {
         var w :Int = data.width;
         var h :Int = data.height;
-        var tile_size = Math.min(Luxe.screen.w, Luxe.screen.h) / (Math.max(w, h) + 2 /* margin */);
+        var margin_tiles = 2;
+        var tile_size = Math.min(Luxe.screen.w / (w + margin_tiles), Luxe.screen.h / (h + margin_tiles));
         layout = new GridLayout(w, h, tile_size, Luxe.screen.mid.clone());
 
         connectionLengths = data.connection_lengths;
