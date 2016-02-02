@@ -30,6 +30,10 @@ class GridLayout {
         return tile_size;
     }
 
+    public function get_rect() {
+        return new luxe.Rectangle(pos.x, pos.y, width * tile_size, height * tile_size);
+    }
+
     public function get_pos(x :Int, y :Int) {
         return new Vector(pos.x + x * tile_size + tile_size / 2, pos.y + y * tile_size + tile_size / 2);
     }
@@ -41,6 +45,9 @@ class GridLayout {
         return { x: x, y: y };
     }
 
+    public function inside_map(x :Int, y :Int) {
+        return (x >= 0 && x < width && y >= 0 && y < height);
+    }
 
     // get height, width
     // convert pos to x,y and vice versa

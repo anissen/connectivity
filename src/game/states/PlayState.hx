@@ -50,7 +50,6 @@ class PlayState extends State {
     var layout :GridLayout;
     var connectionLengths = 4;
 
-    var margin :Float = 64;
     var invalidColor :Color;
 
     var tween_speed :Float = 0.25;
@@ -75,7 +74,7 @@ class PlayState extends State {
     function load_level(data :Dynamic) {
         var w :Int = data.width;
         var h :Int = data.height;
-        var tile_size = Math.min(Luxe.screen.w, Luxe.screen.h) / (Math.max(w, h) + 1 /* margin */);
+        var tile_size = Math.min(Luxe.screen.w, Luxe.screen.h) / (Math.max(w, h) + 2 /* margin */);
         layout = new GridLayout(w, h, tile_size, Luxe.screen.mid.clone());
 
         connectionLengths = data.connection_lengths;
@@ -104,8 +103,6 @@ class PlayState extends State {
 
         tiles = [];
         load_level(Luxe.resources.json('assets/levels/level${level}.json').asset.json);
-
-        margin = layout.get_tile_size() / 2;
 
         for (y in 0 ... layout.height) {
             var arr = [];
@@ -204,7 +201,7 @@ class PlayState extends State {
 
         for (line in lines) {
             for (p in line.points) {
-                if (!inside_map(p.x, p.y)) continue;
+                if (!layout.inside_map(p.x, p.y)) continue;
                 tiles[p.y][p.x].color = line.color;
             }
         }
@@ -270,6 +267,23 @@ class PlayState extends State {
     }
 
     override function onrender() {
+        var rect = layout.get_rect();
+        // Luxe.draw.rectangle({
+        //     rect: rect,
+        //     color: new Color(0, 0, 0),
+        //     immediate: true
+        // });
+        //
+        rect.x -= layout.tile_size;
+        rect.y -= layout.tile_size;
+        rect.w += layout.tile_size * 2;
+        rect.h += layout.tile_size * 2;
+        Luxe.draw.rectangle({
+            rect: rect,
+            color: new Color(0.5, 0.5, 0.5),
+            immediate: true
+        });
+
         for (y in 0 ... layout.height) {
             for (x in 0 ... layout.width) {
                 switch (tiles[y][x].connectType) {
@@ -287,10 +301,12 @@ class PlayState extends State {
                 var displacement =  ((line.requiredConnections + 1) / 2 - c - 1) * 20;
                 for (p in positions) {
                     var vertical = (p.y == -1 || p.y == layout.height);
+                    var pos = layout.get_pos(p.x, p.y); //Vector.Add(layout.get_pos(p.x, p.y), new Vector((p.x == -1 ? layout.tile_size / 4 : 0), (p.y == layout.height ? layout.tile_size / 4 : 0)));
+                    var size = 10;
                     Luxe.draw.box({
-                        rect: new luxe.Rectangle(p.x * layout.tile_size + layout.tile_size / 2 + (p.x == -1 ? layout.tile_size / 4 : 0), p.y * layout.tile_size + layout.tile_size / 2 - (p.y == layout.height ? layout.tile_size / 4 : 0), 10, 10),
+                        rect: new luxe.Rectangle(pos.x - size / 2, pos.y - size / 2, size, size),
                         color: color,
-                        origin: new Vector(-margin + (vertical ? displacement : 0), -margin + (!vertical ? displacement : 0)),
+                        origin: new Vector((vertical ? displacement : 0), (!vertical ? displacement : 0)),
                         immediate: true,
                         depth: 1
                     });
@@ -309,19 +325,17 @@ class PlayState extends State {
         // horizontal line
         if (x > 0 && tiles[y][x-1].connectType == Connected) {
             Luxe.draw.line({
-                p0: new Vector(x * layout.tile_size, y * layout.tile_size + layout.tile_size / 2),
-                p1: new Vector(x * layout.tile_size + layout.tile_size / 2, y * layout.tile_size + layout.tile_size / 2),
+                p0: Vector.Subtract(layout.get_pos(x, y), new Vector(layout.tile_size / 2, 0)),
+                p1: layout.get_pos(x, y),
                 color: connectedLineColor,
-                origin: new Vector(-margin, -margin),
                 immediate: true
             });
         }
         if (x < layout.width - 1 && tiles[y][x+1].connectType == Connected) {
             Luxe.draw.line({
-                p0: new Vector(x * layout.tile_size + layout.tile_size / 2, y * layout.tile_size + layout.tile_size / 2),
-                p1: new Vector(x * layout.tile_size + layout.tile_size, y * layout.tile_size + layout.tile_size / 2),
+                p0: layout.get_pos(x, y),
+                p1: Vector.Add(layout.get_pos(x, y), new Vector(layout.tile_size / 2, 0)),
                 color: connectedLineColor,
-                origin: new Vector(-margin, -margin),
                 immediate: true
             });
         }
@@ -329,30 +343,24 @@ class PlayState extends State {
         // // vertical line
         if (y > 0 && tiles[y-1][x].connectType == Connected) {
             Luxe.draw.line({
-                p0: new Vector(x * layout.tile_size + layout.tile_size / 2, y * layout.tile_size),
-                p1: new Vector(x * layout.tile_size + layout.tile_size / 2, y * layout.tile_size + layout.tile_size / 2),
+                p0: Vector.Subtract(layout.get_pos(x, y), new Vector(0, layout.tile_size / 2)),
+                p1: layout.get_pos(x, y),
                 color: connectedLineColor,
-                origin: new Vector(-margin, -margin),
                 immediate: true
             });
         }
         if (y < layout.height - 1 && tiles[y+1][x].connectType == Connected) {
             Luxe.draw.line({
-                p0: new Vector(x * layout.tile_size + layout.tile_size / 2, y * layout.tile_size + layout.tile_size / 2),
-                p1: new Vector(x * layout.tile_size + layout.tile_size / 2, y * layout.tile_size + layout.tile_size),
+                p0: layout.get_pos(x, y),
+                p1: Vector.Add(layout.get_pos(x, y), new Vector(0, layout.tile_size / 2)),
                 color: connectedLineColor,
-                origin: new Vector(-margin, -margin),
                 immediate: true
             });
         }
     }
 
-    function inside_map(x :Int, y :Int) {
-        return (x >= 0 && x < layout.width && y >= 0 && y < layout.height);
-    }
-
     function can_visit(x :Int, y :Int) :Bool {
-        if (!inside_map(x, y)) return false;
+        if (!layout.inside_map(x, y)) return false;
         return tiles[y][x].connectType == Connected && !tiles[y][x].visited;
     }
 
