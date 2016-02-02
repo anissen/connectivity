@@ -57,6 +57,8 @@ class PlayState extends State {
     var particleSystem :luxe.Particles.ParticleSystem;
     var emitter :luxe.Particles.ParticleEmitter;
 
+    var circleLineScene :luxe.Scene;
+
     var levelIndex :Int = 0;
 
     public function new() {
@@ -67,6 +69,8 @@ class PlayState extends State {
         invalidColor = new Color();
         invalidColor.set(0.4, 0.4, 0.4);
         invalidColor.tween(0.6, { r: 0.8, g: 0.8, b: 0.8 }).reflect().repeat();
+
+        circleLineScene = new luxe.Scene();
 
         reset(0);
     }
@@ -240,18 +244,21 @@ class PlayState extends State {
                 tile.length = connection.tiles.length;
             }
         }
+        circleLineScene.empty();
+
 
         for (y in 0 ... layout.height) {
             for (x in 0 ... layout.width) {
                 var tile = tiles[y][x];
                 var connected = (tile.connectType == Connected);
 
+                var color = convert_color(connected ? tile.color : None);
+                var changedColor = color.toColorHSV();
+                changedColor.v *= 0.8;
+
                 if (tile.color == Invalid) {
                     tile.sprite.color = invalidColor;
                 } else {
-                    var color = convert_color(connected ? tile.color : None);
-                    var changedColor = color.toColorHSV();
-                    changedColor.v *= 0.8;
                     var alpha = (connected ? 1 : 0.1);
                     tile.sprite.color = tile.sprite.color.clone(); // to get rid of invalidColor
                     tile.sprite.color.tween(tween_speed, { r: changedColor.r, g: changedColor.g, b: changedColor.b, a: alpha });
@@ -259,6 +266,38 @@ class PlayState extends State {
 
                 var scale_size = (connected ? 1 : 0.3);
                 luxe.tween.Actuate.tween(tile.sprite.scale, tween_speed, { x: scale_size, y: scale_size});
+
+                // ---------------------
+
+
+                // horizontal line
+                if (connected && x > 0 && tiles[y][x-1].connectType == Connected) {
+                    var sprite = new luxe.Sprite({
+                        pos: Vector.Divide(Vector.Add(layout.get_pos(x, y), layout.get_pos(x - 1, y)), 2),
+                        color: changedColor,
+                        size: new Vector(layout.tile_size, layout.tile_size),
+                        texture: Luxe.resources.texture('assets/images/circle_line.png'),
+                        // scale: new Vector(1, 0),
+                        depth: -1,
+                        scene: circleLineScene
+                    });
+                    // luxe.tween.Actuate.tween(sprite.scale, tween_speed, { x: scale_size, y: scale_size });
+                }
+
+                // // vertical line
+                if (connected && y > 0 && tiles[y-1][x].connectType == Connected) {
+                    var sprite = new luxe.Sprite({
+                        pos: Vector.Divide(Vector.Add(layout.get_pos(x, y), layout.get_pos(x, y - 1)), 2),
+                        color: changedColor,
+                        size: new Vector(layout.tile_size, layout.tile_size),
+                        texture: Luxe.resources.texture('assets/images/circle_line.png'),
+                        rotation_z: 90,
+                        // scale: new Vector(1, 0),
+                        depth: -1,
+                        scene: circleLineScene
+                    });
+                    // luxe.tween.Actuate.tween(sprite.scale, tween_speed, { x: scale_size, y: scale_size });
+                }
             }
         }
 
@@ -317,12 +356,12 @@ class PlayState extends State {
     }
 
     function draw_connect(x :Int, y :Int) {
-        var boxSize = Math.min((tiles[y][x].length / connectionLengths) * layout.tile_size / 2, layout.tile_size / 2);
-        var centerOffset = layout.tile_size / 2 - boxSize / 2;
+        // var boxSize = Math.min((tiles[y][x].length / connectionLengths) * layout.tile_size / 2, layout.tile_size / 2);
+        // var centerOffset = layout.tile_size / 2 - boxSize / 2;
 
         var connectedLineColor = convert_color(tiles[y][x].color).toColorHSV();
         connectedLineColor.v *= 0.8;
-
+        /*
         // horizontal line
         if (x > 0 && tiles[y][x-1].connectType == Connected) {
             Luxe.draw.line({
@@ -358,6 +397,7 @@ class PlayState extends State {
                 immediate: true
             });
         }
+        */
     }
 
     function can_visit(x :Int, y :Int) :Bool {
