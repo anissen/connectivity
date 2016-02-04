@@ -29,7 +29,7 @@ typedef ColorLine = {
     color :ConnectColor,
     points :Array<Point>,
     requiredConnections :Int,
-    connections :Int,
+    connections :Array<Array<Tile>>,
     completedConnections :Int,
     sprites :Array<luxe.Sprite>
 }
@@ -91,7 +91,7 @@ class PlayState extends State {
                 case 1: Blue;
                 case _: Green;
             };
-            line.connections = 0;
+            line.connections = [];
             line.completedConnections = 0;
             line.sprites = [];
         }
@@ -214,16 +214,16 @@ class PlayState extends State {
         var has_won = true;
         var connections = [];
         for (line in lines) {
-            line.connections = 0;
+            line.connections = [];
             line.completedConnections = 0;
             for (p in line.points) {
                 if (can_visit(p.x, p.y)) {
-                    line.connections++;
                     var tiles = get_connection(p.x, p.y);
                     var color = None;
                     for (tile in tiles) {
                         color = mix_colors(tile.color, color);
                     }
+                    line.connections.push(tiles);
                     connections.push({
                         color: color,
                         tiles: tiles
@@ -235,7 +235,7 @@ class PlayState extends State {
                     }
                 }
             }
-            if (line.connections != line.requiredConnections) has_won = false;
+            if (line.connections.length != line.requiredConnections) has_won = false;
         }
 
         for (connection in connections) {
@@ -334,22 +334,30 @@ class PlayState extends State {
         }
         for (line in lines) {
             for (c in 0 ... line.requiredConnections) {
-                var color = new Color(0, 0, 0);
-                if (line.connections <= c) color = convert_color(line.color);
-                if (line.completedConnections > c) color.set(1, 1, 1);
-                var positions = [line.points[0], line.points[line.points.length - 1]];
-                var displacement =  ((line.requiredConnections + 1) / 2 - c - 1) * 20;
-                for (p in positions) {
-                    var vertical = (p.y == -1 || p.y == layout.height);
-                    var pos = layout.get_pos(p.x, p.y); //Vector.Add(layout.get_pos(p.x, p.y), new Vector((p.x == -1 ? layout.tile_size / 4 : 0), (p.y == layout.height ? layout.tile_size / 4 : 0)));
-                    var size = 10;
-                    Luxe.draw.box({
-                        rect: new luxe.Rectangle(pos.x - size / 2, pos.y - size / 2, size, size),
-                        color: color,
-                        origin: new Vector((vertical ? displacement : 0), (!vertical ? displacement : 0)),
-                        immediate: true,
-                        depth: 1
-                    });
+                for (l in 0 ... connectionLengths) {
+                    var color = new Color(0, 0, 0);
+                    if (line.connections.length > c) {
+                        var conn = line.connections[c];
+                        if (conn.length > l) color = convert_color(line.color);
+                    }
+                    // if (line.connections <= c) color = convert_color(line.color);
+                    // if (line.completedConnections > c) color.set(1, 1, 1);
+                    var positions = [line.points[0], line.points[line.points.length - 1]];
+                    var displacementX =  ((line.requiredConnections + 1) / 2 - c - 1) * 20;
+                    var displacementY =  ((connectionLengths + 1) / 2 - l - 1) * 11;
+                    for (p in positions) {
+                        var vertical = (p.y == -1 || p.y == layout.height);
+                        var pos = layout.get_pos(p.x, p.y); //Vector.Add(layout.get_pos(p.x, p.y), new Vector((p.x == -1 ? layout.tile_size / 4 : 0), (p.y == layout.height ? layout.tile_size / 4 : 0)));
+                        var size = 10;
+                        // maybe draw a PIE instead
+                        Luxe.draw.box({
+                            rect: new luxe.Rectangle(pos.x - size / 2, pos.y - size / 2, size, size),
+                            color: color,
+                            origin: new Vector((vertical ? displacementX : displacementY), (!vertical ? displacementX : displacementY)),
+                            immediate: true,
+                            depth: 1
+                        });
+                    }
                 }
             }
         }
