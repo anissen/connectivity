@@ -344,17 +344,17 @@ class PlayState extends State {
                     // if (line.connections <= c) color = convert_color(line.color);
                     // if (line.completedConnections > c) color.set(1, 1, 1);
                     var positions = [line.points[0], line.points[line.points.length - 1]];
-                    var displacementX =  ((line.requiredConnections + 1) / 2 - c - 1) * 15;
+                    var displacement =  ((line.requiredConnections + 1) / 2 - c - 1) * 15;
                     // var displacementY =  ((connectionLengths + 1) / 2 - l - 1) * 11;
                     for (p in positions) {
                         var vertical = (p.y == -1 || p.y == layout.height);
                         var pos = layout.get_pos(p.x, p.y); //Vector.Add(layout.get_pos(p.x, p.y), new Vector((p.x == -1 ? layout.tile_size / 4 : 0), (p.y == layout.height ? layout.tile_size / 4 : 0)));
-                        var size = 8;
+                        var size = 7;
                         if (connection.length > connectionLengths) {
                             Luxe.draw.circle({
                                 x: pos.x,
                                 y: pos.y,
-                                origin: new Vector((vertical ? displacementX : 0), (!vertical ? displacementX : 0)),
+                                origin: new Vector((vertical ? 0 : displacement), (!vertical ? 0 : displacement)),
                                 r: size,
                                 color: color,
                                 immediate: true,
@@ -365,7 +365,7 @@ class PlayState extends State {
                             Luxe.draw.circle({
                                 x: pos.x,
                                 y: pos.y,
-                                origin: new Vector((vertical ? displacementX : 0), (!vertical ? displacementX : 0)),
+                                origin: new Vector((vertical ? 0 : displacement), (!vertical ? 0 : displacement)),
                                 r: (connection.length <= connectionLengths ? size : size * 0.8),
                                 color: (connection.length > l ? convert_color(line.color) : color),
                                 start_angle: l * (360 / connectionLengths),
