@@ -22,7 +22,6 @@ enum ConnectColor {
 enum ConnectType {
     Unconnected;
     Connected;
-    // Marked;
 }
 
 typedef ColorLine = {
@@ -246,7 +245,6 @@ class PlayState extends State {
         }
         circleLineScene.empty();
 
-
         for (y in 0 ... layout.height) {
             for (x in 0 ... layout.width) {
                 var tile = tiles[y][x];
@@ -268,7 +266,6 @@ class PlayState extends State {
                 luxe.tween.Actuate.tween(tile.sprite.scale, tween_speed, { x: scale_size, y: scale_size});
 
                 // ---------------------
-
 
                 // horizontal line
                 if (connected && x > 0 && tiles[y][x-1].connectType == Connected) {
@@ -307,6 +304,7 @@ class PlayState extends State {
     }
 
     override function onrender() {
+        // TEMP CODE to be able to see board outline...
         var rect = layout.get_rect();
         // Luxe.draw.rectangle({
         //     rect: rect,
@@ -323,32 +321,17 @@ class PlayState extends State {
             color: new Color(0.5, 0.5, 0.5),
             immediate: true
         });
+        // ... TEMP CODE
 
-        for (y in 0 ... layout.height) {
-            for (x in 0 ... layout.width) {
-                switch (tiles[y][x].connectType) {
-                    case Connected: draw_connect(x, y);
-                    default:
-                }
-            }
-        }
         for (line in lines) {
             for (c in 0 ... line.requiredConnections) {
                     var connection = (line.connections.length > c ? line.connections[c] : []);
                     var color = new Color(0, 0, 0);
-                    // if (line.connections.length > c) {
-                    //     // var conn = line.connections[c];
-                    //     // if (conn.length > c) color = convert_color(line.color);
-                    //     color = convert_color(line.color);
-                    // }
-                    // if (line.connections <= c) color = convert_color(line.color);
-                    // if (line.completedConnections > c) color.set(1, 1, 1);
                     var positions = [line.points[0], line.points[line.points.length - 1]];
                     var displacement =  ((line.requiredConnections + 1) / 2 - c - 1) * 15;
-                    // var displacementY =  ((connectionLengths + 1) / 2 - l - 1) * 11;
                     for (p in positions) {
                         var vertical = (p.y == -1 || p.y == layout.height);
-                        var pos = layout.get_pos(p.x, p.y); //Vector.Add(layout.get_pos(p.x, p.y), new Vector((p.x == -1 ? layout.tile_size / 4 : 0), (p.y == layout.height ? layout.tile_size / 4 : 0)));
+                        var pos = layout.get_pos(p.x, p.y);
                         var size = 7;
                         if (connection.length > connectionLengths) {
                             Luxe.draw.circle({
@@ -374,62 +357,9 @@ class PlayState extends State {
                                 depth: 1
                             });
                         }
-                        // Luxe.draw.box({
-                        //     rect: new luxe.Rectangle(pos.x - size / 2, pos.y - size / 2, size, size),
-                        //     color: color,
-                        //     origin: new Vector((vertical ? displacementX : displacementY), (!vertical ? displacementX : displacementY)),
-                        //     immediate: true,
-                        //     depth: 1
-                        // });
-
                 }
             }
         }
-    }
-
-    function draw_connect(x :Int, y :Int) {
-        // var boxSize = Math.min((tiles[y][x].length / connectionLengths) * layout.tile_size / 2, layout.tile_size / 2);
-        // var centerOffset = layout.tile_size / 2 - boxSize / 2;
-
-        var connectedLineColor = convert_color(tiles[y][x].color).toColorHSV();
-        connectedLineColor.v *= 0.8;
-        /*
-        // horizontal line
-        if (x > 0 && tiles[y][x-1].connectType == Connected) {
-            Luxe.draw.line({
-                p0: Vector.Subtract(layout.get_pos(x, y), new Vector(layout.tile_size / 2, 0)),
-                p1: layout.get_pos(x, y),
-                color: connectedLineColor,
-                immediate: true
-            });
-        }
-        if (x < layout.width - 1 && tiles[y][x+1].connectType == Connected) {
-            Luxe.draw.line({
-                p0: layout.get_pos(x, y),
-                p1: Vector.Add(layout.get_pos(x, y), new Vector(layout.tile_size / 2, 0)),
-                color: connectedLineColor,
-                immediate: true
-            });
-        }
-
-        // // vertical line
-        if (y > 0 && tiles[y-1][x].connectType == Connected) {
-            Luxe.draw.line({
-                p0: Vector.Subtract(layout.get_pos(x, y), new Vector(0, layout.tile_size / 2)),
-                p1: layout.get_pos(x, y),
-                color: connectedLineColor,
-                immediate: true
-            });
-        }
-        if (y < layout.height - 1 && tiles[y+1][x].connectType == Connected) {
-            Luxe.draw.line({
-                p0: layout.get_pos(x, y),
-                p1: Vector.Add(layout.get_pos(x, y), new Vector(0, layout.tile_size / 2)),
-                color: connectedLineColor,
-                immediate: true
-            });
-        }
-        */
     }
 
     function can_visit(x :Int, y :Int) :Bool {
@@ -492,8 +422,7 @@ class PlayState extends State {
             end_size: new Vector(json.end_size.x, json.end_size.y),
             end_size_random: new Vector(json.end_size_random.x, json.end_size_random.y),
             start_color: new Color(json.start_color.r, json.start_color.g, json.start_color.b, json.start_color.a),
-            end_color: new Color(json.end_color.r, json.end_color.g, json.end_color.b, json.end_color.a),
-            //depth: -0.5 // below circles
+            end_color: new Color(json.end_color.r, json.end_color.g, json.end_color.b, json.end_color.a)
         };
         emitter_template.particle_image = Luxe.resources.texture('assets/images/circle.png');
 
