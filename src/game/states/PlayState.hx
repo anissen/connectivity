@@ -125,7 +125,6 @@ class PlayState extends State {
             tiles.push(arr);
         }
 
-        Luxe.renderer.state.lineWidth(6);
         for (line in lines) {
             for (i in 1 ... line.points.length - 1) {
                 var p_before = line.points[i - 1];
@@ -252,12 +251,12 @@ class PlayState extends State {
 
                 var color = convert_color(connected ? tile.color : None);
                 var changedColor = color.toColorHSV();
-                changedColor.v *= 0.8;
+                changedColor.v *= 0.6;
 
                 if (tile.color == Invalid) {
                     tile.sprite.color = invalidColor;
                 } else {
-                    var alpha = (connected ? 1 : 0.1);
+                    var alpha = (connected ? 1 : 0.15);
                     tile.sprite.color = tile.sprite.color.clone(); // to get rid of invalidColor
                     tile.sprite.color.tween(tween_speed, { r: changedColor.r, g: changedColor.g, b: changedColor.b, a: alpha });
                 }
@@ -306,12 +305,12 @@ class PlayState extends State {
     override function onrender() {
         // TEMP CODE to be able to see board outline...
         var rect = layout.get_rect();
-        // Luxe.draw.rectangle({
-        //     rect: rect,
-        //     color: new Color(0, 0, 0),
-        //     immediate: true
-        // });
-        //
+        Luxe.draw.rectangle({
+            rect: rect,
+            color: new Color(0, 0, 0),
+            immediate: true
+        });
+
         rect.x -= layout.tile_size;
         rect.y -= layout.tile_size;
         rect.w += layout.tile_size * 2;
