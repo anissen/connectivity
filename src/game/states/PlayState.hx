@@ -24,7 +24,7 @@ enum ConnectType {
     Connected;
 }
 
-typedef ColorLine = {
+typedef LineData = {
     color :ConnectColor,
     points :Array<Point>,
     requiredConnections :Int,
@@ -44,7 +44,7 @@ typedef Tile = {
 class PlayState extends State {
     static public var StateId :String = 'PlayState';
     var tiles :Array<Array<Tile>>;
-    var lines :Array<ColorLine>;
+    var lines :Array<LineData>;
 
     var layout :GridLayout;
     var connectionLengths = 4;
@@ -71,6 +71,8 @@ class PlayState extends State {
 
         circleLineScene = new luxe.Scene();
 
+        Luxe.events.listen('load_level', reset);
+
         reset(0);
     }
 
@@ -78,6 +80,7 @@ class PlayState extends State {
         var w :Int = data.width;
         var h :Int = data.height;
         var margin_tiles = 2;
+
         var tile_size = Math.min(Luxe.screen.w / (w + margin_tiles), Luxe.screen.h / (h + margin_tiles));
         layout = new GridLayout(w, h, tile_size, Luxe.screen.mid.clone());
 
@@ -126,34 +129,39 @@ class PlayState extends State {
         }
 
         for (line in lines) {
-            for (i in 1 ... line.points.length - 1) {
-                var p_before = line.points[i - 1];
-                var p = line.points[i];
-                var p_after = line.points[i + 1];
-
-                var line_horizontal = (p_before.x == p_after.x);
-                var line_vertical = (p_before.y == p_after.y);
-                var rotation = line_horizontal ? 1 : 0;
-                var is_line = line_horizontal || line_vertical;
-
-                if (!is_line) {
-                    if (p_before.x == p.x) {
-                        rotation = (p_before.y < p.y) ? ((p_after.x > p.x) ? 2 : 3) : ((p_after.x > p.x) ? 3 : 2);
-                    } else if (p_before.y == p.y) {
-                        rotation = (p_before.x > p.x) ? ((p_after.y > p.y) ? 1 : 0) : ((p_after.y > p.y) ? 0 : 1);
-                    }
-                }
-
-                var sprite = new luxe.Sprite({
-                    pos: layout.get_pos(p.x, p.y),
-                    color: convert_color(line.color),
-                    size: new Vector(layout.tile_size, layout.tile_size),
-                    texture: Luxe.resources.texture(is_line ? 'assets/images/line.png' : 'assets/images/turn.png'),
-                    rotation_z: rotation * 90,
-                    depth: -2
-                });
-                line.sprites.push(sprite);
-            }
+            // for (i in 1 ... line.points.length - 1) {
+            //     var p_before = line.points[i - 1];
+            //     var p = line.points[i];
+            //     var p_after = line.points[i + 1];
+            //
+            //     var line_horizontal = (p_before.x == p_after.x);
+            //     var line_vertical = (p_before.y == p_after.y);
+            //     var rotation = line_horizontal ? 1 : 0;
+            //     var is_line = line_horizontal || line_vertical;
+            //
+            //     if (!is_line) {
+            //         if (p_before.x == p.x) {
+            //             rotation = (p_before.y < p.y) ? ((p_after.x > p.x) ? 2 : 3) : ((p_after.x > p.x) ? 3 : 2);
+            //         } else if (p_before.y == p.y) {
+            //             rotation = (p_before.x > p.x) ? ((p_after.y > p.y) ? 1 : 0) : ((p_after.y > p.y) ? 0 : 1);
+            //         }
+            //     }
+            //
+            //     var sprite = new luxe.Sprite({
+            //         pos: layout.get_pos(p.x, p.y),
+            //         color: convert_color(line.color),
+            //         size: new Vector(layout.tile_size, layout.tile_size),
+            //         texture: Luxe.resources.texture(is_line ? 'assets/images/line.png' : 'assets/images/turn.png'),
+            //         rotation_z: rotation * 90,
+            //         depth: -2
+            //     });
+            //     line.sprites.push(sprite);
+            // }
+            new game.entities.ColorLine({
+                points: line.points,
+                color: convert_color(line.color),
+                layout: layout
+            });
         }
 
         calc_colors();

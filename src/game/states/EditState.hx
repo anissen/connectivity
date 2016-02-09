@@ -77,12 +77,17 @@ class EditState extends luxe.States.State {
         }
 
         for (p in plist) add_plat(p);
-        dropdown.onselect.listen(function(idx,_,_){ dropdown.label.text = plist[idx]; });
+        dropdown.onselect.listen(function(idx, _, _) {
+            dropdown.label.text = plist[idx];
+            Main.states.disable(StateId);
+            Luxe.events.fire('load_level', idx);
+            Main.states.enable(StateId);
+        });
 
         var buttons = [
-            { name: 'Load', onclick: function(e,c) { trace('Load!'); } },
-            { name: 'Save', onclick: function(e,c) { trace('Save!'); } },
-            { name: 'Try', onclick: function(e,c) { trace('try!'); } }
+            { name: 'Load', onclick: function(e, c) { trace('Load!'); } },
+            { name: 'Save', onclick: function(e, c) { trace('Save!'); } },
+            { name: 'Try', onclick: function(e, c) { trace('try!'); } }
         ];
         for (i in 0 ... buttons.length) {
             var button = new mint.Button({
