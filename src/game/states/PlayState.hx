@@ -64,7 +64,7 @@ class PlayState extends State {
         super({ name: StateId });
     }
 
-    override function init() {
+    override function onenter(_) {
         invalidColor = new Color();
         invalidColor.set(0.4, 0.4, 0.4);
         invalidColor.tween(0.6, { r: 0.8, g: 0.8, b: 0.8 }).reflect().repeat();
@@ -312,22 +312,22 @@ class PlayState extends State {
 
     override function onrender() {
         // TEMP CODE to be able to see board outline...
-        var rect = layout.get_rect();
-        Luxe.draw.rectangle({
-            rect: rect,
-            color: new Color(0, 0, 0),
-            immediate: true
-        });
-
-        rect.x -= layout.tile_size;
-        rect.y -= layout.tile_size;
-        rect.w += layout.tile_size * 2;
-        rect.h += layout.tile_size * 2;
-        Luxe.draw.rectangle({
-            rect: rect,
-            color: new Color(0.5, 0.5, 0.5),
-            immediate: true
-        });
+        // var rect = layout.get_rect();
+        // Luxe.draw.rectangle({
+        //     rect: rect,
+        //     color: new Color(0, 0, 0),
+        //     immediate: true
+        // });
+        //
+        // rect.x -= layout.tile_size;
+        // rect.y -= layout.tile_size;
+        // rect.w += layout.tile_size * 2;
+        // rect.h += layout.tile_size * 2;
+        // Luxe.draw.rectangle({
+        //     rect: rect,
+        //     color: new Color(0.5, 0.5, 0.5),
+        //     immediate: true
+        // });
         // ... TEMP CODE
 
         for (line in lines) {
@@ -388,6 +388,7 @@ class PlayState extends State {
     }
 
     function convert_color(color :ConnectColor) :Color {
+        // TODO: Improve colors
         return switch (color) {
             case Invalid: invalidColor;
             case None: new Color(0.5, 0.5, 0.5);

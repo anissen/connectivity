@@ -20,6 +20,8 @@ class Main extends luxe.Game {
         config.preload.jsons.push({ id: 'assets/levels/level1.json' });
         config.preload.jsons.push({ id: 'assets/levels/level2.json' });
 
+        config.preload.jsons.push({ id: 'assets/level_selections/selection0.json' });
+
         config.render.antialiasing = 4;
         return config;
     }
@@ -30,9 +32,11 @@ class Main extends luxe.Game {
         Luxe.renderer.clear_color.set(1, 1, 1);
 
         states = new States({ name: 'state_machine' });
+        states.add(new LevelSelectState());
         states.add(new PlayState());
         states.add(new EditState());
-        states.set(PlayState.StateId);
+        states.set(LevelSelectState.StateId);
+        // states.set(PlayState.StateId);
     }
 
     // Scale camera's viewport accordingly when game is scaled, common and suitable for most games

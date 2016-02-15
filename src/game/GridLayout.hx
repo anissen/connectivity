@@ -34,7 +34,7 @@ class GridLayout {
         return new luxe.Rectangle(pos.x, pos.y, width * tile_size, height * tile_size);
     }
 
-    public function get_pos(x :Int, y :Int) {
+public function get_pos(x :Int, y :Int /* corner */) {
         return new Vector(pos.x + x * tile_size + tile_size / 2, pos.y + y * tile_size + tile_size / 2);
     }
 
