@@ -11,18 +11,26 @@ import game.GridLayout;
 
 using Lambda;
 
+typedef LevelCircles = {
+    point :Point,
+    level :Int
+}
+
 class LevelSelectState extends State {
     static public var StateId :String = 'LevelSelectState';
 
     var layout :GridLayout;
     var tween_speed :Float = 0.25;
+    var levelIndex :Int;
+
+    var levelCircles :Array<LevelCircles>;
 
     public function new() {
         super({ name: StateId });
     }
 
-    override function onenter(_) {
-        reset(0);
+    override function onenter(data :Dynamic) {
+        reset(data);
     }
 
     function load_level(data :Dynamic) {
@@ -47,6 +55,7 @@ class LevelSelectState extends State {
             }
         }
 
+        levelCircles = [];
         for (i in 0 ... data.lines.length) {
             var line = data.lines[i];
             var points :Array<{ x :Int, y :Int, level :Null<Int> }> = line.points;
@@ -57,9 +66,10 @@ class LevelSelectState extends State {
             });
             for (p in line.points) {
                 if (p.level == null) continue;
+                levelCircles.push({ point: p, level: p.level });
                 var sprite = new luxe.Sprite({
                     pos: layout.get_pos(p.x, p.y),
-                    color: new Color(0, 0.8, 1.0, 1),
+                    color: (levelIndex >= p.level ? new Color(0, 0.8, 1.0, 1) : new Color(0, 0.4, 0.5, 1)),
                     size: new Vector(layout.tile_size, layout.tile_size),
                     // scale: new Vector(0, 0),
                     texture: Luxe.resources.texture('assets/images/circle.png'),
@@ -92,13 +102,21 @@ class LevelSelectState extends State {
     function reset(level :Int) {
         Luxe.scene.empty();
 
-        load_level(Luxe.resources.json('assets/level_selections/selection${level}.json').asset.json);
+        levelIndex = level;
+
+        load_level(Luxe.resources.json('assets/level_selections/selection0.json').asset.json);
     }
 
     override public function onmouseup(event :luxe.Input.MouseEvent) {
-        var tile_pos = layout.get_point(event.pos);
-        if (tile_pos == null) return;
+        var point = layout.get_point(event.pos);
+        if (point == null) return;
 
+        for (levelCircle in levelCircles) {
+            if (levelCircle.point.x == point.x && levelCircle.point.y == point.y && levelCircle.level <= levelIndex) {
+                Main.states.set(PlayState.StateId, levelCircle.level);
+                return;
+            }
+        }
         // var tile = tiles[tile_pos.y][tile_pos.x];
         // tile.connectType = switch (tile.connectType) {
         //     case Unconnected: Connected;

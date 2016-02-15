@@ -64,7 +64,7 @@ class PlayState extends State {
         super({ name: StateId });
     }
 
-    override function onenter(_) {
+    override function onenter(data :Dynamic) {
         invalidColor = new Color();
         invalidColor.set(0.4, 0.4, 0.4);
         invalidColor.tween(0.6, { r: 0.8, g: 0.8, b: 0.8 }).reflect().repeat();
@@ -73,7 +73,7 @@ class PlayState extends State {
 
         Luxe.events.listen('load_level', reset);
 
-        reset(0);
+        reset(data);
     }
 
     function load_level(data :Dynamic) {
@@ -306,7 +306,8 @@ class PlayState extends State {
         }
 
         if (has_won) {
-            reset(levelIndex + 1);
+            // reset(levelIndex + 1);
+            Main.states.set(LevelSelectState.StateId, levelIndex + 1);
         }
     }
 
@@ -443,12 +444,13 @@ class PlayState extends State {
 
     override public function onkeyup(event :luxe.Input.KeyEvent) {
         switch (event.keycode) {
-            case luxe.Input.Key.key_0: reset(0);
-            case luxe.Input.Key.key_1: reset(1);
-            case luxe.Input.Key.key_2: reset(2);
-            case luxe.Input.Key.kp_minus: Luxe.camera.zoom -= 0.05;
-            case luxe.Input.Key.kp_period: Luxe.camera.zoom += 0.05;
+            case luxe.Input.Key.key_r: reset(levelIndex);
+            case luxe.Input.Key.escape:
+                if (Main.states.enabled(EditState.StateId)) Main.states.disable(EditState.StateId);
+                Main.states.set(LevelSelectState.StateId, levelIndex);
+            #if debug
             case luxe.Input.Key.key_d: Main.states.enabled(EditState.StateId) ? Main.states.disable(EditState.StateId) : Main.states.enable(EditState.StateId);
+            #end
         }
     }
 }
