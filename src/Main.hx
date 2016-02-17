@@ -35,8 +35,8 @@ class Main extends luxe.Game {
         states.add(new LevelSelectState());
         states.add(new PlayState());
         states.add(new EditState());
-        states.set(LevelSelectState.StateId);
-        // states.set(PlayState.StateId);
+        states.set(LevelSelectState.StateId, 0 /* starting level */);
+        // states.set(PlayState.StateId, 0 /* starting level */);
     }
 
     // Scale camera's viewport accordingly when game is scaled, common and suitable for most games
