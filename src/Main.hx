@@ -41,12 +41,12 @@ class Main extends luxe.Game {
 
     // Scale camera's viewport accordingly when game is scaled, common and suitable for most games
 	override function onwindowsized(e: luxe.Screen.WindowEvent) {
-        Luxe.camera.viewport = new luxe.Rectangle(0, 0, e.event.x, e.event.y);
+        Luxe.camera.viewport = new luxe.Rectangle(0, 0, e.x, e.y);
     }
 
     override function onkeyup(e :KeyEvent) {
         if (e.keycode == Key.enter && e.mod.alt) {
-            app.app.window.fullscreen = !app.app.window.fullscreen;
+            Luxe.snow.runtime.window_fullscreen(true, true);
         }
         #if desktop
         if (e.keycode == Key.escape) {
