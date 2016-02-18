@@ -259,7 +259,7 @@ class PlayState extends State {
 
                 var color = convert_color(connected ? tile.color : None);
                 var changedColor = color.toColorHSV();
-                changedColor.v *= 0.6;
+                changedColor.v *= (tile.length == connectionLengths ? 0.8 : 0.6);
 
                 if (tile.color == Invalid) {
                     tile.sprite.color = invalidColor;
