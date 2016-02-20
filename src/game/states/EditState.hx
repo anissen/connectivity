@@ -28,7 +28,7 @@ class EditState extends luxe.States.State {
         layout = new Margins();
     }
 
-    override function onenabled(data) {
+    override function onenabled(data :Dynamic) {
         canvas = new AutoCanvas({
             name:'canvas',
             rendering: rendering,
@@ -79,9 +79,9 @@ class EditState extends luxe.States.State {
         for (p in plist) add_plat(p);
         dropdown.onselect.listen(function(idx, _, _) {
             dropdown.label.text = plist[idx];
-            Main.states.disable(StateId);
+            Main.states.disable(StateId);  // HACK!
             Luxe.events.fire('load_level', idx);
-            Main.states.enable(StateId);
+            Main.states.enable(StateId);  // HACK!
         });
 
         var buttons = [
@@ -117,11 +117,26 @@ class EditState extends luxe.States.State {
 
             _s.onchange.listen(function(_val,_) { _l.text = '$text$_val'; });
             layout.margin(_s, right, fixed, 8);
+
+            return _s;
         }
 
-        make_slider('width_slider', 'Width: ', 10, 220, 128, 32, 3, 8, 4);
-        make_slider('height_slider', 'Height: ', 10, 255, 128, 32, 3, 8, 4);
-        make_slider('length_slider', 'Length: ', 10, 290, 128, 32, 1, 5, 2);
+        make_slider('width_slider', 'Width: ', 10, 220, 128, 32, 2, 10, data.layout_width).onchange.listen(function(value, _) {
+            Main.states.disable(StateId); // HACK!
+            Luxe.events.fire('grid_width', value);
+            data.layout_width = value;
+            Main.states.enable(StateId, data);  // HACK!
+        });
+        make_slider('height_slider', 'Height: ', 10, 255, 128, 32, 2, 10, data.layout_height).onchange.listen(function(value, _) {
+            Main.states.disable(StateId);  // HACK!
+            Luxe.events.fire('grid_height', value);
+            data.layout_height = value;
+            Main.states.enable(StateId, data);  // HACK!
+        });
+        make_slider('length_slider', 'Lengths: ', 10, 290, 128, 32, 1, 5, data.connection_lengths).onchange.listen(function(value, _) {
+            Luxe.events.fire('connection_length', value);
+            data.connection_lengths = value;
+        });
     }
 
     override function ondisabled(data) {

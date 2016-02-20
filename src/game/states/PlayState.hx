@@ -72,18 +72,26 @@ class PlayState extends State {
         circleLineScene = new luxe.Scene();
 
         Luxe.events.listen('load_level', reset);
+        Luxe.events.listen('grid_width', function(v) {
+            make_grid_layout(v, layout.height);
+        });
+        Luxe.events.listen('grid_height', function(v) {
+            make_grid_layout(layout.width, v);
+        });
 
         reset(data);
     }
 
-    function load_level(data :Dynamic) {
-        var w :Int = data.width;
-        var h :Int = data.height;
+    function make_grid_layout(w :Int, h :Int) {
         var margin_tiles = 2;
 
         var tile_size = Math.min(Luxe.screen.w / (w + margin_tiles), Luxe.screen.h / (h + margin_tiles));
         layout = new GridLayout(w, h, tile_size, Luxe.screen.mid.clone());
 
+        redraw_level();
+    }
+
+    function load_level(data :Dynamic) {
         connectionLengths = data.connection_lengths;
         lines = data.lines;
         for (i in 0 ... lines.length) {
@@ -97,19 +105,23 @@ class PlayState extends State {
             line.completedConnections = 0;
             line.sprites = [];
         }
+        make_grid_layout(data.width, data.height);
     }
 
     function reset(level :Int) {
         levelIndex = level;
         if (particleSystem != null) particleSystem.stop();
 
-        Luxe.scene.empty();
-
         var ps_data = Luxe.resources.json('assets/particle_systems/fireworks.json').asset.json;
         particleSystem = load_particle_system(ps_data);
 
-        tiles = [];
         load_level(Luxe.resources.json('assets/levels/level${level}.json').asset.json);
+    }
+
+    function redraw_level() {
+        Luxe.scene.empty();
+
+        tiles = [];
 
         for (y in 0 ... layout.height) {
             var arr = [];
@@ -421,7 +433,12 @@ class PlayState extends State {
                 if (Main.states.enabled(EditState.StateId)) Main.states.disable(EditState.StateId);
                 Main.states.set(LevelSelectState.StateId, levelIndex);
             #if debug
-            case luxe.Input.Key.key_d: Main.states.enabled(EditState.StateId) ? Main.states.disable(EditState.StateId) : Main.states.enable(EditState.StateId);
+            case luxe.Input.Key.key_d:
+                if (Main.states.enabled(EditState.StateId)) {
+                    Main.states.disable(EditState.StateId);
+                } else {
+                    Main.states.enable(EditState.StateId, { layout_width: layout.width, layout_height: layout.height, connection_lengths: connectionLengths });
+                }
             #end
         }
     }
