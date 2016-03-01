@@ -84,9 +84,16 @@ class EditState extends luxe.States.State {
             Main.states.enable(StateId);  // HACK!
         });
 
+        function do_save() {
+            #if cpp
+            var result = dialogs.Dialogs.save('Save level', { ext: 'json', desc: 'Level file' });
+            Luxe.events.fire('save_level', result);
+            #end
+        }
+
         var buttons = [
             // { name: 'Load', onclick: function(e, c) { trace('Load!'); } },
-            { name: 'Save', onclick: function(e, c) { trace('Save!'); } },
+            { name: 'Save', onclick: function(e, c) { do_save(); } },
             // { name: 'Try', onclick: function(e, c) { trace('try!'); } }
         ];
         for (i in 0 ... buttons.length) {

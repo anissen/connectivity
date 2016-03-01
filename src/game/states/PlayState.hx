@@ -76,6 +76,27 @@ class PlayState extends State {
         keepScene = new luxe.Scene();
 
         Luxe.events.listen('load_level', reset);
+        #if cpp
+        Luxe.events.listen('save_level', function(path) {
+            var raw_lines = [];
+            for (line in lines) {
+                raw_lines.push({
+                    required_connections: line.requiredConnections,
+                    points: line.points
+                });
+            }
+
+            var level = {
+                connection_lengths: connectionLengths,
+                width: layout.width,
+                height: layout.height,
+                lines: raw_lines
+            };
+
+            var json = haxe.Json.stringify(level);
+            sys.io.File.saveContent(path, json);
+        });
+        #end
         Luxe.events.listen('grid_width', function(v) {
             make_grid_layout(v, layout.height);
         });

@@ -38,7 +38,8 @@
             "comment" : "flow build android --d android_release",
             dependencies : {
                 luxe: '*',
-                mint: '*'
+                mint: '*',
+                linc_dialogs: '*'
             },
             defines : [
                 'absolute-path'
