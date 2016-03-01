@@ -85,9 +85,9 @@ class EditState extends luxe.States.State {
         });
 
         var buttons = [
-            { name: 'Load', onclick: function(e, c) { trace('Load!'); } },
+            // { name: 'Load', onclick: function(e, c) { trace('Load!'); } },
             { name: 'Save', onclick: function(e, c) { trace('Save!'); } },
-            { name: 'Try', onclick: function(e, c) { trace('try!'); } }
+            // { name: 'Try', onclick: function(e, c) { trace('try!'); } }
         ];
         for (i in 0 ... buttons.length) {
             var button = new mint.Button({

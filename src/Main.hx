@@ -7,6 +7,7 @@ import game.states.*;
 
 class Main extends luxe.Game {
     static public var states :States;
+    var fullscreen :Bool = false;
 
     override function config(config :luxe.AppConfig) {
         config.preload.textures.push({ id: 'assets/images/line.png' });
@@ -46,7 +47,8 @@ class Main extends luxe.Game {
 
     override function onkeyup(e :KeyEvent) {
         if (e.keycode == Key.enter && e.mod.alt) {
-            Luxe.snow.runtime.window_fullscreen(true, true);
+            fullscreen = !fullscreen;
+            Luxe.snow.runtime.window_fullscreen(fullscreen, true /* true-fullscreen */);
         }
         #if desktop
         if (e.keycode == Key.escape) {

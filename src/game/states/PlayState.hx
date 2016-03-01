@@ -82,13 +82,17 @@ class PlayState extends State {
         reset(data);
     }
 
-    function make_grid_layout(w :Int, h :Int) {
+    override function onwindowsized(e: luxe.Screen.WindowEvent) {
+        make_grid_layout(layout.width, layout.height, false);
+    }
+
+    function make_grid_layout(w :Int, h :Int, clear :Bool = true /* hack */) {
         var margin_tiles = 2;
 
         var tile_size = Math.min(Luxe.screen.w / (w + margin_tiles), Luxe.screen.h / (h + margin_tiles));
         layout = new GridLayout(w, h, tile_size, Luxe.screen.mid.clone());
 
-        redraw_level();
+        redraw_level(clear);
     }
 
     function load_level(data :Dynamic) {
@@ -118,10 +122,12 @@ class PlayState extends State {
         load_level(Luxe.resources.json('assets/levels/level${level}.json').asset.json);
     }
 
-    function redraw_level() {
+    function redraw_level(clear :Bool = true) {
         Luxe.scene.empty();
 
-        tiles = [];
+        this.particleSystem.start();
+
+        if (clear) tiles = [];
 
         for (y in 0 ... layout.height) {
             var arr = [];
@@ -135,9 +141,15 @@ class PlayState extends State {
                     depth: 0
                 });
                 // sprite = new Connection()
-                arr.push({ connectType: Unconnected, color: None, length: 0, visited: false, sprite: sprite });
+                if (clear) {
+                    arr.push({ connectType: Unconnected, color: None, length: 0, visited: false, sprite: sprite });
+                } else {
+                    tiles[y][x].sprite = sprite;
+                }
             }
-            tiles.push(arr);
+            if (clear) {
+                tiles.push(arr);
+            }
         }
 
         for (line in lines) {
@@ -297,22 +309,22 @@ class PlayState extends State {
 
     override function onrender() {
         // TEMP CODE to be able to see board outline...
-        // var rect = layout.get_rect();
-        // Luxe.draw.rectangle({
-        //     rect: rect,
-        //     color: new Color(0, 0, 0),
-        //     immediate: true
-        // });
-        //
-        // rect.x -= layout.tile_size;
-        // rect.y -= layout.tile_size;
-        // rect.w += layout.tile_size * 2;
-        // rect.h += layout.tile_size * 2;
-        // Luxe.draw.rectangle({
-        //     rect: rect,
-        //     color: new Color(0.5, 0.5, 0.5),
-        //     immediate: true
-        // });
+        var rect = layout.get_rect();
+        Luxe.draw.rectangle({
+            rect: rect,
+            color: new Color(0, 0, 0),
+            immediate: true
+        });
+
+        rect.x -= layout.tile_size;
+        rect.y -= layout.tile_size;
+        rect.w += layout.tile_size * 2;
+        rect.h += layout.tile_size * 2;
+        Luxe.draw.rectangle({
+            rect: rect,
+            color: new Color(0.5, 0.5, 0.5),
+            immediate: true
+        });
         // ... TEMP CODE
 
         for (line in lines) {

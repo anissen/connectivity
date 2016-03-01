@@ -1,4 +1,5 @@
 
 # To-do
 
-* Maybe: Refactor ColorLine and ConnectedTile into entities
+[ ] Maybe: Refactor ColorLine and ConnectedTile into entities
+[ ] Simple level editing
