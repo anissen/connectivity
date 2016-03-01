@@ -24,6 +24,8 @@ enum ConnectType {
     Connected;
 }
 
+// TODO: Move game state elsewhere and have both play and edit state have access to it
+
 typedef LineData = {
     color :ConnectColor,
     points :Array<Point>,
@@ -57,6 +59,7 @@ class PlayState extends State {
     var emitter :luxe.Particles.ParticleEmitter;
 
     var circleLineScene :luxe.Scene;
+    var keepScene :luxe.Scene;
 
     var levelIndex :Int = 0;
 
@@ -70,6 +73,7 @@ class PlayState extends State {
         invalidColor.tween(0.6, { r: 0.8, g: 0.8, b: 0.8 }).reflect().repeat();
 
         circleLineScene = new luxe.Scene();
+        keepScene = new luxe.Scene();
 
         Luxe.events.listen('load_level', reset);
         Luxe.events.listen('grid_width', function(v) {
@@ -118,6 +122,7 @@ class PlayState extends State {
 
         var ps_data = Luxe.resources.json('assets/particle_systems/fireworks.json').asset.json;
         particleSystem = load_particle_system(ps_data);
+        particleSystem.start();
 
         load_level(Luxe.resources.json('assets/levels/level${level}.json').asset.json);
     }
@@ -125,7 +130,7 @@ class PlayState extends State {
     function redraw_level(clear :Bool = true) {
         Luxe.scene.empty();
 
-        this.particleSystem.start();
+        particleSystem.stop();
 
         if (clear) tiles = [];
 
@@ -431,7 +436,10 @@ class PlayState extends State {
         };
         emitter_template.particle_image = Luxe.resources.texture('assets/images/circle.png');
 
-        var particles = new luxe.Particles.ParticleSystem({ name: 'particles' });
+        var particles = new luxe.Particles.ParticleSystem({
+            name: 'particles',
+            scene: keepScene
+        });
         particles.add_emitter(emitter_template);
         emitter = particles.emitters.get('template');
         particles.stop();
