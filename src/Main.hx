@@ -28,6 +28,10 @@ class Main extends luxe.Game {
     }
 
     override function ready() {
+        trace(' ·Connectivity·  Built ${MacroHelper.CompiledAt()}');
+
+        // Luxe.audio.loop(Luxe.resources.audio('assets/music/wind_intuition.mp3').source, 0.2);
+
         luxe.tween.Actuate.defaultEase = luxe.tween.easing.Quad.easeInOut;
 
         Luxe.renderer.clear_color.set(1, 1, 1);
