@@ -41,7 +41,7 @@ class Main extends luxe.Game {
     override function ready() {
         trace(' ·Connectivity·  Built ${MacroHelper.CompiledAt()}');
 
-        // Luxe.audio.loop(Luxe.resources.audio('assets/music/wind_intuition.mp3').source, 0.2);
+        // Luxe.audio.loop(Luxe.resources.audio('assets/music/wind_intuition.mp3').source, 0.1);
 
         luxe.tween.Actuate.defaultEase = luxe.tween.easing.Quad.easeInOut;
 

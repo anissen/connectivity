@@ -189,7 +189,7 @@ class PlayState extends State {
         calc_colors();
     }
 
-    function play_sound_at(sound :String, ?x :Int) {
+    function play_sound(sound :String, ?x :Int) {
         var handle = Luxe.audio.play(Luxe.resources.audio('assets/sounds/$sound').source);
         if (x == null) return;
         Luxe.audio.pan(handle, layout.get_width() / (x + 1));
@@ -201,11 +201,21 @@ class PlayState extends State {
 
         var tile = tiles[tile_pos.y][tile_pos.x];
         tile.connectType = switch (tile.connectType) {
-            case Unconnected: play_sound_at('place.wav', tile_pos.x);  Connected;
-            case Connected:   play_sound_at('remove.wav', tile_pos.x); Unconnected;
+            case Unconnected: Connected;
+            case Connected:   Unconnected;
         };
 
-        calc_colors();
+        calc_colors(/* TODO: must take the tile as argument to be able to trigger the correct sounds */);
+
+        if (tile.connectType == Unconnected) {
+            play_sound('remove.wav', tile_pos.x);
+        } else {
+            switch (tile.color) {
+                case None: play_sound('misplace.wav', tile_pos.x);
+                case Invalid: play_sound('invalid.wav', tile_pos.x);
+                default: play_sound('place.wav', tile_pos.x);
+            }
+        }
 
         if (tile.connectType == Connected) {
             Luxe.camera.shake((tile.color == Invalid) ? 5 : 1);
@@ -266,6 +276,7 @@ class PlayState extends State {
                         has_won = false;
                     } else {
                         line.completedConnections++;
+                        // play_sound('connection_complete.wav');
                     }
                 }
             }
@@ -335,6 +346,7 @@ class PlayState extends State {
 
         if (has_won) {
             // reset(levelIndex + 1);
+            play_sound('level_completed.wav');
             Main.states.set(LevelSelectState.StateId, levelIndex + 1);
         }
     }
