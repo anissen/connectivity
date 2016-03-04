@@ -189,14 +189,20 @@ class PlayState extends State {
         calc_colors();
     }
 
+    function play_sound_at(sound :String, ?x :Int) {
+        var handle = Luxe.audio.play(Luxe.resources.audio('assets/sounds/$sound').source);
+        if (x == null) return;
+        Luxe.audio.pan(handle, layout.get_width() / (x + 1));
+    }
+
     override public function onmouseup(event :luxe.Input.MouseEvent) {
         var tile_pos = layout.get_point(event.pos);
         if (tile_pos == null) return;
 
         var tile = tiles[tile_pos.y][tile_pos.x];
         tile.connectType = switch (tile.connectType) {
-            case Unconnected: Connected;
-            case Connected: Unconnected;
+            case Unconnected: play_sound_at('place.wav', tile_pos.x);  Connected;
+            case Connected:   play_sound_at('remove.wav', tile_pos.x); Unconnected;
         };
 
         calc_colors();

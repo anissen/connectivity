@@ -23,6 +23,17 @@ class Main extends luxe.Game {
 
         config.preload.jsons.push({ id: 'assets/level_selections/selection0.json' });
 
+        // config.preload.sounds.push({ id: 'assets/music/wind_intuition.mp3', is_stream: true }); // TODO: convert to ogg
+
+        config.preload.sounds.push({ id: 'assets/sounds/connection_complete.wav', is_stream: false });
+        config.preload.sounds.push({ id: 'assets/sounds/invalid.wav', is_stream: false });
+        config.preload.sounds.push({ id: 'assets/sounds/level_completed.wav', is_stream: false });
+        config.preload.sounds.push({ id: 'assets/sounds/line_complete.wav', is_stream: false });
+        config.preload.sounds.push({ id: 'assets/sounds/line_incomplete.wav', is_stream: false });
+        config.preload.sounds.push({ id: 'assets/sounds/misplace.wav', is_stream: false });
+        config.preload.sounds.push({ id: 'assets/sounds/place.wav', is_stream: false });
+        config.preload.sounds.push({ id: 'assets/sounds/remove.wav', is_stream: false });
+
         config.render.antialiasing = 4;
         return config;
     }
