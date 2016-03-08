@@ -64,44 +64,21 @@ class PlayState extends State {
             sys.io.File.saveContent(path, json);
         });
         #end
-        Luxe.events.listen('grid_width', function(v) {
-            make_grid_layout(v, map_data.layout.height);
-        });
-        Luxe.events.listen('grid_height', function(v) {
-            make_grid_layout(map_data.layout.width, v);
+        // Luxe.events.listen('grid_width', function(v) {
+        //     make_grid_layout(v, map_data.layout.height);
+        // });
+        // Luxe.events.listen('grid_height', function(v) {
+        //     make_grid_layout(map_data.layout.width, v);
+        // });
+        Luxe.events.listen('redraw', function(_) {
+            redraw_level();
         });
 
         reset(data);
     }
 
     override function onwindowsized(e: luxe.Screen.WindowEvent) {
-        make_grid_layout(map_data.layout.width, map_data.layout.height, false);
-    }
-
-    function make_grid_layout(w :Int, h :Int, clear :Bool = true /* hack */) {
-        var margin_tiles = 2;
-
-        var tile_size = Math.min(Luxe.screen.w / (w + margin_tiles), Luxe.screen.h / (h + margin_tiles));
-        map_data.layout = new GridLayout(w, h, tile_size, Luxe.screen.mid.clone());
-
-        redraw_level(clear);
-    }
-
-    function load_level(data :Dynamic) {
-        map_data.connectionLengths = data.connection_lengths;
-        map_data.lines = data.lines;
-        for (i in 0 ... map_data.lines.length) {
-            var line = map_data.lines[i];
-            line.color = switch (i) {
-                case 0: Orange;
-                case 1: Blue;
-                case _: Green;
-            };
-            line.connections = [];
-            line.completedConnections = 0;
-            line.sprites = [];
-        }
-        make_grid_layout(data.width, data.height);
+        // make_grid_layout(map_data.layout.width, map_data.layout.height, false);
     }
 
     function reset(level :Int) {
@@ -112,7 +89,8 @@ class PlayState extends State {
         particleSystem = load_particle_system(ps_data);
         particleSystem.start();
 
-        load_level(Luxe.resources.json('assets/levels/level${level}.json').asset.json);
+        map_data.load_level(Luxe.resources.json('assets/levels/level${level}.json').asset.json);
+        redraw_level();
     }
 
     function redraw_level(clear :Bool = true) {

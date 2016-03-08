@@ -11,21 +11,26 @@ import mint.render.luxe.*;
 import mint.layout.margins.Margins;
 import mint.focus.Focus;
 
+import game.ds.MapData;
 import game.states.AutoCanvas;
 
 class EditState extends luxe.States.State {
     static public var StateId :String = 'EditState';
 
-    var focus: Focus;
-    var layout: Margins;
-    var canvas: AutoCanvas;
-    var rendering: LuxeMintRender;
+    var focus :Focus;
+    var layout :Margins;
+    var canvas :AutoCanvas;
+    var rendering :LuxeMintRender;
+
+    var map_data :MapData;
+    var line_color :game.ds.MapData.ConnectColor = None;
 
     public function new() {
         super({ name: StateId });
 
         rendering = new LuxeMintRender();
         layout = new Margins();
+        map_data = MapData.get_instance();
     }
 
     override function onenabled(data :Dynamic) {
@@ -129,16 +134,26 @@ class EditState extends luxe.States.State {
         }
 
         make_slider('width_slider', 'Width: ', 10, 220, 128, 32, 2, 10, data.layout_width).onchange.listen(function(value, _) {
-            Main.states.disable(StateId); // HACK!
-            Luxe.events.fire('grid_width', value);
+            // Main.states.disable(StateId); // HACK!
+            // Luxe.events.fire('grid_width', value);
             data.layout_width = value;
-            Main.states.enable(StateId, data);  // HACK!
+            // Main.states.enable(StateId, data);  // HACK!
+            map_data.make_grid_layout(Math.floor(value), map_data.layout.height);
+            Main.states.disable(StateId); // HACK!
+            // PlayState should redraw
+            Luxe.events.fire('redraw');
+            Main.states.enable(StateId); // HACK!
         });
         make_slider('height_slider', 'Height: ', 10, 255, 128, 32, 2, 10, data.layout_height).onchange.listen(function(value, _) {
-            Main.states.disable(StateId);  // HACK!
-            Luxe.events.fire('grid_height', value);
+            // Main.states.disable(StateId);  // HACK!
+            // Luxe.events.fire('grid_height', value);
             data.layout_height = value;
-            Main.states.enable(StateId, data);  // HACK!
+            // Main.states.enable(StateId, data);  // HACK!
+            map_data.make_grid_layout(map_data.layout.width, Math.floor(value));
+            Main.states.disable(StateId); // HACK!
+            // PlayState should redraw
+            Luxe.events.fire('redraw');
+            Main.states.enable(StateId); // HACK!
         });
         make_slider('length_slider', 'Lengths: ', 10, 290, 128, 32, 1, 5, data.connection_lengths).onchange.listen(function(value, _) {
             Luxe.events.fire('connection_length', value);
@@ -148,5 +163,44 @@ class EditState extends luxe.States.State {
 
     override function ondisabled(data) {
         canvas.destroy();
+    }
+
+    override function onrender() {
+        Luxe.draw.circle({
+            x: Luxe.screen.cursor.pos.x,
+            y: Luxe.screen.cursor.pos.y,
+            color: convert_color(line_color),
+            r: 20,
+            immediate: true
+        });
+    }
+
+    function convert_color(color :ConnectColor) :Color { // TODO: Move this to MapData
+        // TODO: Improve colors
+        return switch (color) {
+            case Invalid: new Color(Math.random(), Math.random(), Math.random());
+            case None: new Color(0.5, 0.5, 0.5);
+            case Orange: new Color(1, 0.5, 0.1);
+            case Green: new Color(0, 0.5, 0);
+            case Blue: new Color(0, 0.45, 0.85);
+        }
+    }
+
+    override function onmouseup(event :luxe.Input.MouseEvent) {
+        var tile_pos = map_data.layout.get_point(event.pos);
+        if (tile_pos == null) return;
+
+        if (event.button == luxe.MouseButton.right) { // copy color
+            var line = map_data.line_at(tile_pos.x, tile_pos.y);
+            line_color = (line == null ? None : line.color);
+        } else {
+            var line = map_data.line_by_color(line_color);
+            if (line == null) return;
+            line.points.push({ x: tile_pos.x, y: tile_pos.y }); // TODO: Also handle insertions
+            Main.states.disable(StateId); // HACK!
+            // PlayState should redraw
+            Luxe.events.fire('redraw');
+            Main.states.enable(StateId); // HACK!
+        }
     }
 }
