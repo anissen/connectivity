@@ -7,50 +7,15 @@ import luxe.tween.Actuate;
 import luxe.Vector;
 import luxe.Visual;
 import luxe.Color;
-import game.GridLayout;
+
+import game.ds.MapData;
+import game.ds.GridLayout;
 
 using Lambda;
 
-enum ConnectColor {
-    None;
-    Invalid;
-    Orange;
-    Green;
-    Blue;
-}
-
-enum ConnectType {
-    Unconnected;
-    Connected;
-}
-
-// TODO: Move game state elsewhere and have both play and edit state have access to it
-
-typedef LineData = {
-    color :ConnectColor,
-    points :Array<Point>,
-    requiredConnections :Int,
-    connections :Array<Array<Tile>>,
-    completedConnections :Int,
-    sprites :Array<luxe.Sprite>
-}
-
-typedef Tile = {
-    color :ConnectColor,
-    connectType :ConnectType,
-    length :Int,
-    visited :Bool,
-    sprite :luxe.Sprite
-}
-
 class PlayState extends State {
     static public var StateId :String = 'PlayState';
-    var tiles :Array<Array<Tile>>;
-    var lines :Array<LineData>;
-
-    var layout :GridLayout;
-    var connectionLengths = 4;
-
+    var map_data :MapData;
     var invalidColor :Color;
 
     var tween_speed :Float = 0.25;
@@ -68,6 +33,8 @@ class PlayState extends State {
     }
 
     override function onenter(data :Dynamic) {
+        map_data = MapData.get_instance();
+
         invalidColor = new Color();
         invalidColor.set(0.4, 0.4, 0.4);
         invalidColor.tween(0.6, { r: 0.8, g: 0.8, b: 0.8 }).reflect().repeat();
@@ -98,33 +65,33 @@ class PlayState extends State {
         });
         #end
         Luxe.events.listen('grid_width', function(v) {
-            make_grid_layout(v, layout.height);
+            make_grid_layout(v, map_data.layout.height);
         });
         Luxe.events.listen('grid_height', function(v) {
-            make_grid_layout(layout.width, v);
+            make_grid_layout(map_data.layout.width, v);
         });
 
         reset(data);
     }
 
     override function onwindowsized(e: luxe.Screen.WindowEvent) {
-        make_grid_layout(layout.width, layout.height, false);
+        make_grid_layout(map_data.layout.width, map_data.layout.height, false);
     }
 
     function make_grid_layout(w :Int, h :Int, clear :Bool = true /* hack */) {
         var margin_tiles = 2;
 
         var tile_size = Math.min(Luxe.screen.w / (w + margin_tiles), Luxe.screen.h / (h + margin_tiles));
-        layout = new GridLayout(w, h, tile_size, Luxe.screen.mid.clone());
+        map_data.layout = new GridLayout(w, h, tile_size, Luxe.screen.mid.clone());
 
         redraw_level(clear);
     }
 
     function load_level(data :Dynamic) {
-        connectionLengths = data.connection_lengths;
-        lines = data.lines;
-        for (i in 0 ... lines.length) {
-            var line = lines[i];
+        map_data.connectionLengths = data.connection_lengths;
+        map_data.lines = data.lines;
+        for (i in 0 ... map_data.lines.length) {
+            var line = map_data.lines[i];
             line.color = switch (i) {
                 case 0: Orange;
                 case 1: Blue;
@@ -153,15 +120,15 @@ class PlayState extends State {
 
         particleSystem.stop();
 
-        if (clear) tiles = [];
+        if (clear) map_data.tiles = [];
 
-        for (y in 0 ... layout.height) {
+        for (y in 0 ... map_data.layout.height) {
             var arr = [];
-            for (x in 0 ... layout.width) {
+            for (x in 0 ... map_data.layout.width) {
                 var sprite = new luxe.Sprite({
-                    pos: layout.get_pos(x, y),
+                    pos: map_data.layout.get_pos(x, y),
                     color: new Color(1, 1, 1, 0),
-                    size: new Vector(layout.tile_size, layout.tile_size),
+                    size: new Vector(map_data.layout.tile_size, map_data.layout.tile_size),
                     scale: new Vector(0, 0),
                     texture: Luxe.resources.texture('assets/images/circle.png'),
                     depth: 0
@@ -170,19 +137,19 @@ class PlayState extends State {
                 if (clear) {
                     arr.push({ connectType: Unconnected, color: None, length: 0, visited: false, sprite: sprite });
                 } else {
-                    tiles[y][x].sprite = sprite;
+                    map_data.tiles[y][x].sprite = sprite;
                 }
             }
             if (clear) {
-                tiles.push(arr);
+                map_data.tiles.push(arr);
             }
         }
 
-        for (line in lines) {
+        for (line in map_data.lines) {
             new game.entities.ColorLine({
                 points: line.points,
                 color: convert_color(line.color),
-                layout: layout
+                layout: map_data.layout
             });
         }
 
@@ -192,14 +159,16 @@ class PlayState extends State {
     function play_sound(sound :String, ?x :Int) {
         var handle = Luxe.audio.play(Luxe.resources.audio('assets/sounds/$sound').source);
         if (x == null) return;
-        Luxe.audio.pan(handle, layout.get_width() / (x + 1));
+        Luxe.audio.pan(handle, map_data.layout.get_width() / (x + 1));
     }
 
     override public function onmouseup(event :luxe.Input.MouseEvent) {
-        var tile_pos = layout.get_point(event.pos);
+        if (Main.states.enabled(EditState.StateId)) return; // disable play events when editing
+
+        var tile_pos = map_data.layout.get_point(event.pos);
         if (tile_pos == null) return;
 
-        var tile = tiles[tile_pos.y][tile_pos.x];
+        var tile = map_data.tiles[tile_pos.y][tile_pos.x];
         tile.connectType = switch (tile.connectType) {
             case Unconnected: Connected;
             case Connected:   Unconnected;
@@ -220,10 +189,10 @@ class PlayState extends State {
         if (tile.connectType == Connected) {
             Luxe.camera.shake((tile.color == Invalid) ? 5 : 1);
             emitter.start_color = convert_color(tile.color);
-            particleSystem.pos = layout.get_pos(tile_pos.x, tile_pos.y);
+            particleSystem.pos = map_data.layout.get_pos(tile_pos.x, tile_pos.y);
             particleSystem.start(1);
 
-            for (line in lines) {
+            for (line in map_data.lines) {
                 for (sprite in line.sprites) {
                     if (line.color == tile.color) {
                         var color = convert_color(line.color);
@@ -239,40 +208,40 @@ class PlayState extends State {
     }
 
     function calc_colors() {
-        for (y in 0 ... layout.height) {
-            for (x in 0 ... layout.width) {
-                var tile = tiles[y][x];
+        for (y in 0 ... map_data.layout.height) {
+            for (x in 0 ... map_data.layout.width) {
+                var tile = map_data.tiles[y][x];
                 tile.color = None;
                 tile.length = 0;
                 tile.visited = false;
             }
         }
 
-        for (line in lines) {
+        for (line in map_data.lines) {
             for (p in line.points) {
-                if (!layout.inside_map(p.x, p.y)) continue;
-                tiles[p.y][p.x].color = line.color;
+                if (!map_data.layout.inside_map(p.x, p.y)) continue;
+                map_data.tiles[p.y][p.x].color = line.color;
             }
         }
 
         var has_won = true;
         var connections = [];
-        for (line in lines) {
+        for (line in map_data.lines) {
             line.connections = [];
             line.completedConnections = 0;
             for (p in line.points) {
-                if (can_visit(p.x, p.y)) {
-                    var tiles = get_connection(p.x, p.y);
+                if (map_data.can_visit(p.x, p.y)) {
+                    var tiles = map_data.get_connection(p.x, p.y);
                     var color = None;
                     for (tile in tiles) {
-                        color = mix_colors(tile.color, color);
+                        color = map_data.mix_colors(tile.color, color);
                     }
                     line.connections.push(tiles);
                     connections.push({
                         color: color,
                         tiles: tiles
                     });
-                    if (color == Invalid || tiles.length != connectionLengths) {
+                    if (color == Invalid || tiles.length != map_data.connectionLengths) {
                         has_won = false;
                     } else {
                         line.completedConnections++;
@@ -291,14 +260,14 @@ class PlayState extends State {
         }
         circleLineScene.empty();
 
-        for (y in 0 ... layout.height) {
-            for (x in 0 ... layout.width) {
-                var tile = tiles[y][x];
+        for (y in 0 ... map_data.layout.height) {
+            for (x in 0 ... map_data.layout.width) {
+                var tile = map_data.tiles[y][x];
                 var connected = (tile.connectType == Connected);
 
                 var color = convert_color(connected ? tile.color : None);
                 var changedColor = color.toColorHSV();
-                changedColor.v *= (tile.length == connectionLengths ? 0.8 : 0.6);
+                changedColor.v *= (tile.length == map_data.connectionLengths ? 0.8 : 0.6);
 
                 if (tile.color == Invalid) {
                     tile.sprite.color = invalidColor;
@@ -314,11 +283,11 @@ class PlayState extends State {
                 // ---------------------
 
                 // horizontal line
-                if (connected && x > 0 && tiles[y][x-1].connectType == Connected) {
+                if (connected && x > 0 && map_data.tiles[y][x-1].connectType == Connected) {
                     var sprite = new luxe.Sprite({
-                        pos: Vector.Divide(Vector.Add(layout.get_pos(x, y), layout.get_pos(x - 1, y)), 2),
+                        pos: Vector.Divide(Vector.Add(map_data.layout.get_pos(x, y), map_data.layout.get_pos(x - 1, y)), 2),
                         color: changedColor,
-                        size: new Vector(layout.tile_size, layout.tile_size),
+                        size: new Vector(map_data.layout.tile_size, map_data.layout.tile_size),
                         texture: Luxe.resources.texture('assets/images/circle_line.png'),
                         // scale: new Vector(1, 0),
                         depth: -1,
@@ -328,11 +297,11 @@ class PlayState extends State {
                 }
 
                 // // vertical line
-                if (connected && y > 0 && tiles[y-1][x].connectType == Connected) {
+                if (connected && y > 0 && map_data.tiles[y-1][x].connectType == Connected) {
                     var sprite = new luxe.Sprite({
-                        pos: Vector.Divide(Vector.Add(layout.get_pos(x, y), layout.get_pos(x, y - 1)), 2),
+                        pos: Vector.Divide(Vector.Add(map_data.layout.get_pos(x, y), map_data.layout.get_pos(x, y - 1)), 2),
                         color: changedColor,
-                        size: new Vector(layout.tile_size, layout.tile_size),
+                        size: new Vector(map_data.layout.tile_size, map_data.layout.tile_size),
                         texture: Luxe.resources.texture('assets/images/circle_line.png'),
                         rotation_z: 90,
                         // scale: new Vector(1, 0),
@@ -353,17 +322,17 @@ class PlayState extends State {
 
     override function onrender() {
         // TEMP CODE to be able to see board outline...
-        var rect = layout.get_rect();
+        var rect = map_data.layout.get_rect();
         Luxe.draw.rectangle({
             rect: rect,
             color: new Color(0, 0, 0),
             immediate: true
         });
 
-        rect.x -= layout.tile_size;
-        rect.y -= layout.tile_size;
-        rect.w += layout.tile_size * 2;
-        rect.h += layout.tile_size * 2;
+        rect.x -= map_data.layout.tile_size;
+        rect.y -= map_data.layout.tile_size;
+        rect.w += map_data.layout.tile_size * 2;
+        rect.h += map_data.layout.tile_size * 2;
         Luxe.draw.rectangle({
             rect: rect,
             color: new Color(0.5, 0.5, 0.5),
@@ -371,17 +340,17 @@ class PlayState extends State {
         });
         // ... TEMP CODE
 
-        for (line in lines) {
+        for (line in map_data.lines) {
             for (c in 0 ... line.requiredConnections) {
                     var connection = (line.connections.length > c ? line.connections[c] : []);
                     var color = new Color(0, 0, 0);
                     var positions = [line.points[0], line.points[line.points.length - 1]];
                     var displacement =  ((line.requiredConnections + 1) / 2 - c - 1) * 15;
                     for (p in positions) {
-                        var vertical = (p.y == -1 || p.y == layout.height);
-                        var pos = layout.get_pos(p.x, p.y);
+                        var vertical = (p.y == -1 || p.y == map_data.layout.height);
+                        var pos = map_data.layout.get_pos(p.x, p.y);
                         var size = 7;
-                        if (connection.length > connectionLengths) {
+                        if (connection.length > map_data.connectionLengths) {
                             Luxe.draw.circle({
                                 x: pos.x,
                                 y: pos.y,
@@ -392,15 +361,15 @@ class PlayState extends State {
                                 depth: 1
                             });
                         }
-                        for (l in 0 ... connectionLengths) {
+                        for (l in 0 ... map_data.connectionLengths) {
                             Luxe.draw.circle({
                                 x: pos.x,
                                 y: pos.y,
                                 origin: new Vector((vertical ? 0 : displacement), (!vertical ? 0 : displacement)),
-                                r: (connection.length <= connectionLengths ? size : size * 0.8),
+                                r: (connection.length <= map_data.connectionLengths ? size : size * 0.8),
                                 color: (connection.length > l ? convert_color(line.color) : color),
-                                start_angle: l * (360 / connectionLengths),
-                                end_angle: (l + 1) * (360 / connectionLengths),
+                                start_angle: l * (360 / map_data.connectionLengths),
+                                end_angle: (l + 1) * (360 / map_data.connectionLengths),
                                 immediate: true,
                                 depth: 1
                             });
@@ -408,24 +377,6 @@ class PlayState extends State {
                 }
             }
         }
-    }
-
-    function can_visit(x :Int, y :Int) :Bool {
-        if (!layout.inside_map(x, y)) return false;
-        return tiles[y][x].connectType == Connected && !tiles[y][x].visited;
-    }
-
-    function get_connection(x: Int, y: Int) :Array<Tile> {
-        if (!can_visit(x, y)) return [];
-        tiles[y][x].visited = true;
-
-        var list = [];
-        list.push(tiles[y][x]);
-        if (can_visit(x - 1, y)) list = list.concat(get_connection(x - 1, y));
-        if (can_visit(x + 1, y)) list = list.concat(get_connection(x + 1, y));
-        if (can_visit(x, y - 1)) list = list.concat(get_connection(x, y - 1));
-        if (can_visit(x, y + 1)) list = list.concat(get_connection(x, y + 1));
-        return list;
     }
 
     function convert_color(color :ConnectColor) :Color {
@@ -437,13 +388,6 @@ class PlayState extends State {
             case Green: new Color(0, 0.5, 0);
             case Blue: new Color(0, 0.45, 0.85);
         }
-    }
-
-    function mix_colors(color1 :ConnectColor, color2 :ConnectColor) :ConnectColor {
-        if (color1 == color2) return color1;
-        if (color1 == None) return color2;
-        if (color2 == None) return color1;
-        return Invalid;
     }
 
     function load_particle_system(json :Dynamic) :luxe.Particles.ParticleSystem {
@@ -496,7 +440,7 @@ class PlayState extends State {
                 if (Main.states.enabled(EditState.StateId)) {
                     Main.states.disable(EditState.StateId);
                 } else {
-                    Main.states.enable(EditState.StateId, { layout_width: layout.width, layout_height: layout.height, connection_lengths: connectionLengths });
+                    Main.states.enable(EditState.StateId, { layout_width: map_data.layout.width, layout_height: map_data.layout.height, connection_lengths: map_data.connectionLengths });
                 }
             #end
         }

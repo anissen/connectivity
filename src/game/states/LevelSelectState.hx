@@ -7,7 +7,9 @@ import luxe.tween.Actuate;
 import luxe.Vector;
 import luxe.Visual;
 import luxe.Color;
-import game.GridLayout;
+
+import game.ds.Point;
+import game.ds.GridLayout;
 
 using Lambda;
 

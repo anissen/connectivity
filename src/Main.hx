@@ -4,9 +4,11 @@ import luxe.Input.KeyEvent;
 import luxe.Input.Key;
 
 import game.states.*;
+import game.ds.MapData;
 
 class Main extends luxe.Game {
     static public var states :States;
+    // static public var map_data :MapData;
     var fullscreen :Bool = false;
 
     override function config(config :luxe.AppConfig) {

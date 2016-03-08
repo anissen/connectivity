@@ -6,8 +6,8 @@ import luxe.Sprite;
 import luxe.Vector;
 import luxe.Scene;
 
-import game.GridLayout.Point;
-import game.GridLayout.GridLayout;
+import game.ds.Point;
+import game.ds.GridLayout;
 
 typedef ColorLineOptions = {
     points :Array<Point>,
