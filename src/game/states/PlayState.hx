@@ -46,7 +46,7 @@ class PlayState extends State {
         #if cpp
         Luxe.events.listen('save_level', function(path) {
             var raw_lines = [];
-            for (line in lines) {
+            for (line in map_data.lines) {
                 raw_lines.push({
                     required_connections: line.requiredConnections,
                     points: line.points
@@ -54,9 +54,9 @@ class PlayState extends State {
             }
 
             var level = {
-                connection_lengths: connectionLengths,
-                width: layout.width,
-                height: layout.height,
+                connection_lengths: map_data.connectionLengths,
+                width: map_data.layout.width,
+                height: map_data.layout.height,
                 lines: raw_lines
             };
 
@@ -155,12 +155,12 @@ class PlayState extends State {
         calc_colors(/* TODO: must take the tile as argument to be able to trigger the correct sounds */);
 
         if (tile.connectType == Unconnected) {
-            play_sound('remove.wav', tile_pos.x);
+            play_sound('remove.ogg', tile_pos.x);
         } else {
             switch (tile.color) {
-                case None: play_sound('misplace.wav', tile_pos.x);
-                case Invalid: play_sound('invalid.wav', tile_pos.x);
-                default: play_sound('place.wav', tile_pos.x);
+                case None: play_sound('misplace.ogg', tile_pos.x);
+                case Invalid: play_sound('invalid.ogg', tile_pos.x);
+                default: play_sound('place.ogg', tile_pos.x);
             }
         }
 
@@ -223,7 +223,7 @@ class PlayState extends State {
                         has_won = false;
                     } else {
                         line.completedConnections++;
-                        // play_sound('connection_complete.wav');
+                        // play_sound('connection_complete.ogg');
                     }
                 }
             }
@@ -293,7 +293,7 @@ class PlayState extends State {
 
         if (has_won) {
             // reset(levelIndex + 1);
-            play_sound('level_completed.wav');
+            play_sound('level_completed.ogg');
             Main.states.set(LevelSelectState.StateId, levelIndex + 1);
         }
     }
