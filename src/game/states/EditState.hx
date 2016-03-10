@@ -17,10 +17,10 @@ import game.states.AutoCanvas;
 class EditState extends luxe.States.State {
     static public var StateId :String = 'EditState';
 
-    var focus :Focus;
-    var layout :Margins;
-    var canvas :AutoCanvas;
-    var rendering :LuxeMintRender;
+    // var focus :Focus;
+    // var layout :Margins;
+    // var canvas :AutoCanvas;
+    // var rendering :LuxeMintRender;
 
     var map_data :MapData;
     var line_color :game.ds.MapData.ConnectColor = None;
@@ -28,11 +28,28 @@ class EditState extends luxe.States.State {
     public function new() {
         super({ name: StateId });
 
-        rendering = new LuxeMintRender();
-        layout = new Margins();
+        // rendering = new LuxeMintRender();
+        // layout = new Margins();
         map_data = MapData.get_instance();
     }
 
+    override function onenabled(data :Dynamic) {
+        map_data.make_grid_layout(9, 9, true);
+    }
+
+    override function ondisabled(data :Dynamic) {
+        var w = 1;
+        var h = 1;
+        for (line in map_data.lines) {
+            for (p in line.points) {
+                if (p.x > w) w = p.x;
+                if (p.y > h) h = p.y;
+            }
+        }
+        map_data.make_grid_layout(w, h, true);
+    }
+
+    /*
     override function onenabled(data :Dynamic) {
         canvas = new AutoCanvas({
             name:'canvas',
@@ -164,6 +181,7 @@ class EditState extends luxe.States.State {
     override function ondisabled(data) {
         canvas.destroy();
     }
+    */
 
     override function onrender() {
         Luxe.draw.circle({
@@ -187,20 +205,37 @@ class EditState extends luxe.States.State {
     }
 
     override function onmouseup(event :luxe.Input.MouseEvent) {
-        var tile_pos = map_data.layout.get_point(event.pos);
-        if (tile_pos == null) return;
+        if (line_color == None) return;
 
-        if (event.button == luxe.MouseButton.right) { // copy color
-            var line = map_data.line_at(tile_pos.x, tile_pos.y);
-            line_color = (line == null ? None : line.color);
-        } else {
-            var line = map_data.line_by_color(line_color);
-            if (line == null) return;
-            line.points.push({ x: tile_pos.x, y: tile_pos.y }); // TODO: Also handle insertions
-            Main.states.disable(StateId); // HACK!
-            // PlayState should redraw
-            Luxe.events.fire('redraw');
-            Main.states.enable(StateId); // HACK!
-        }
+        var tile_pos = map_data.layout.get_point(event.pos);
+        // if (tile_pos == null) return;
+
+        var line = map_data.line_by_color(line_color);
+        line.points.push({ x: tile_pos.x, y: tile_pos.y });
+
+        Luxe.events.fire('redraw');
+
+        // if (event.button == luxe.MouseButton.right) { // copy color
+        //     var line = map_data.line_at(tile_pos.x, tile_pos.y);
+        //     line_color = (line == null ? None : line.color);
+        // } else {
+        //     var line = map_data.line_by_color(line_color);
+        //     if (line == null) return;
+        //     line.points.push({ x: tile_pos.x, y: tile_pos.y }); // TODO: Also handle insertions
+        //     Main.states.disable(StateId); // HACK!
+        //     // PlayState should redraw
+        //     Luxe.events.fire('redraw');
+        //     Main.states.enable(StateId); // HACK!
+        // }
+    }
+
+    override function onkeydown(event :luxe.Input.KeyEvent) {
+        switch (event.keycode) {
+            case luxe.Input.Key.key_1: line_color = Orange;
+            case luxe.Input.Key.key_2: line_color = Green;
+            case luxe.Input.Key.key_3: line_color = Blue;
+            case luxe.Input.Key.key_c: map_data.line_by_color(line_color).points = []; Luxe.events.fire('redraw'); line_color = None;
+            default: line_color = None;
+        };
     }
 }

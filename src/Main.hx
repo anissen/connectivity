@@ -25,7 +25,7 @@ class Main extends luxe.Game {
 
         config.preload.jsons.push({ id: 'assets/level_selections/selection0.json' });
 
-        // config.preload.sounds.push({ id: 'assets/music/wind_intuition.ogg', is_stream: true }); // TODO: convert to ogg
+        // config.preload.sounds.push({ id: 'assets/music/wind_intuition.ogg', is_stream: true });
 
         config.preload.sounds.push({ id: 'assets/sounds/invalid.ogg', is_stream: false });
         config.preload.sounds.push({ id: 'assets/sounds/level_completed.ogg', is_stream: false });
@@ -42,7 +42,7 @@ class Main extends luxe.Game {
     override function ready() {
         trace(' ·Connectivity·  Built ${MacroHelper.CompiledAt()}');
 
-        // Luxe.audio.loop(Luxe.resources.audio('assets/music/wind_intuition.mp3').source, 0.1);
+        // Luxe.audio.loop(Luxe.resources.audio('assets/music/wind_intuition.ogg').source, 0.1);
 
         luxe.tween.Actuate.defaultEase = luxe.tween.easing.Quad.easeInOut;
 

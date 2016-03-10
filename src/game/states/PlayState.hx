@@ -319,6 +319,7 @@ class PlayState extends State {
         // ... TEMP CODE
 
         for (line in map_data.lines) {
+            if (line.points.length == 0) continue;
             for (c in 0 ... line.requiredConnections) {
                     var connection = (line.connections.length > c ? line.connections[c] : []);
                     var color = new Color(0, 0, 0);
