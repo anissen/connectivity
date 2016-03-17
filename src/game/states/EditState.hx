@@ -17,10 +17,10 @@ import game.states.AutoCanvas;
 class EditState extends luxe.States.State {
     static public var StateId :String = 'EditState';
 
-    // var focus :Focus;
-    // var layout :Margins;
-    // var canvas :AutoCanvas;
-    // var rendering :LuxeMintRender;
+    var focus :Focus;
+    var layout :Margins;
+    var canvas :AutoCanvas;
+    var rendering :LuxeMintRender;
 
     var map_data :MapData;
     var line_color :game.ds.MapData.ConnectColor = None;
@@ -28,28 +28,28 @@ class EditState extends luxe.States.State {
     public function new() {
         super({ name: StateId });
 
-        // rendering = new LuxeMintRender();
-        // layout = new Margins();
+        rendering = new LuxeMintRender();
+        layout = new Margins();
         map_data = MapData.get_instance();
     }
 
-    override function onenabled(data :Dynamic) {
-        map_data.make_grid_layout(9, 9, true);
-    }
+    // override function onenabled(data :Dynamic) {
+    //     map_data.make_grid_layout(9, 9, true);
+    // }
 
-    override function ondisabled(data :Dynamic) {
-        var w = 1;
-        var h = 1;
-        for (line in map_data.lines) {
-            for (p in line.points) {
-                if (p.x > w) w = p.x;
-                if (p.y > h) h = p.y;
-            }
-        }
-        map_data.make_grid_layout(w, h, true);
-    }
+    // override function ondisabled(data :Dynamic) {
+    //     var w = 1;
+    //     var h = 1;
+    //     for (line in map_data.lines) {
+    //         for (p in line.points) {
+    //             if (p.x > w) w = p.x;
+    //             if (p.y > h) h = p.y;
+    //         }
+    //     }
+    //     map_data.make_grid_layout(w, h, true);
+    // }
 
-    /*
+
     override function onenabled(data :Dynamic) {
         canvas = new AutoCanvas({
             name:'canvas',
@@ -101,9 +101,9 @@ class EditState extends luxe.States.State {
         for (p in plist) add_plat(p);
         dropdown.onselect.listen(function(idx, _, _) {
             dropdown.label.text = plist[idx];
-            Main.states.disable(StateId);  // HACK!
+            // Main.states.disable(StateId);  // HACK!
             Luxe.events.fire('load_level', idx);
-            Main.states.enable(StateId);  // HACK!
+            // Main.states.enable(StateId);  // HACK!
         });
 
         function do_save() {
@@ -111,6 +111,29 @@ class EditState extends luxe.States.State {
             var result = dialogs.Dialogs.save('Save level', { ext: 'json', desc: 'Level file' });
             Luxe.events.fire('save_level', result);
             #end
+        }
+
+        var buttons = [
+            // { name: 'Load', onclick: function(e, c) { trace('Load!'); } },
+            #if cpp
+            { name: 'Save', onclick: function(e, c) { do_save(); } }
+            #elseif js
+            { name: 'Save (Disabled)', onclick: function(e, c) { js.Browser.alert('Saving is only available on desktop'); } }
+            #end
+            // { name: 'Try', onclick: function(e, c) { trace('try!'); } }
+        ];
+        for (i in 0 ... buttons.length) {
+            var button = new mint.Button({
+                parent: window,
+                name: 'button_$i',
+                x: 8, y: 32 + 8 + 32 + 40 * i, w: 60, h: 32,
+                text: buttons[i].name,
+                text_size: 14,
+                align: TextAlign.left,
+                options: { label: { color:new Color().rgb(0x9dca63) } },
+                onclick: buttons[i].onclick
+            });
+            layout.margin(button, right, fixed, 8);
         }
 
         var buttons = [
@@ -156,10 +179,10 @@ class EditState extends luxe.States.State {
             data.layout_width = value;
             // Main.states.enable(StateId, data);  // HACK!
             map_data.make_grid_layout(Math.floor(value), map_data.layout.height);
-            Main.states.disable(StateId); // HACK!
+            // Main.states.disable(StateId); // HACK!
             // PlayState should redraw
             Luxe.events.fire('redraw');
-            Main.states.enable(StateId); // HACK!
+            // Main.states.enable(StateId); // HACK!
         });
         make_slider('height_slider', 'Height: ', 10, 255, 128, 32, 2, 10, data.layout_height).onchange.listen(function(value, _) {
             // Main.states.disable(StateId);  // HACK!
@@ -167,10 +190,10 @@ class EditState extends luxe.States.State {
             data.layout_height = value;
             // Main.states.enable(StateId, data);  // HACK!
             map_data.make_grid_layout(map_data.layout.width, Math.floor(value));
-            Main.states.disable(StateId); // HACK!
+            // Main.states.disable(StateId); // HACK!
             // PlayState should redraw
             Luxe.events.fire('redraw');
-            Main.states.enable(StateId); // HACK!
+            // Main.states.enable(StateId); // HACK!
         });
         make_slider('length_slider', 'Lengths: ', 10, 290, 128, 32, 1, 5, data.connection_lengths).onchange.listen(function(value, _) {
             Luxe.events.fire('connection_length', value);
@@ -181,7 +204,6 @@ class EditState extends luxe.States.State {
     override function ondisabled(data) {
         canvas.destroy();
     }
-    */
 
     override function onrender() {
         Luxe.draw.circle({
@@ -222,10 +244,10 @@ class EditState extends luxe.States.State {
         //     var line = map_data.line_by_color(line_color);
         //     if (line == null) return;
         //     line.points.push({ x: tile_pos.x, y: tile_pos.y }); // TODO: Also handle insertions
-        //     Main.states.disable(StateId); // HACK!
+            // Main.states.disable(StateId); // HACK!
         //     // PlayState should redraw
         //     Luxe.events.fire('redraw');
-        //     Main.states.enable(StateId); // HACK!
+            // Main.states.enable(StateId); // HACK!
         // }
     }
 
