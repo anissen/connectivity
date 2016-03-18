@@ -136,25 +136,6 @@ class EditState extends luxe.States.State {
             layout.margin(button, right, fixed, 8);
         }
 
-        var buttons = [
-            // { name: 'Load', onclick: function(e, c) { trace('Load!'); } },
-            { name: 'Save', onclick: function(e, c) { do_save(); } },
-            // { name: 'Try', onclick: function(e, c) { trace('try!'); } }
-        ];
-        for (i in 0 ... buttons.length) {
-            var button = new mint.Button({
-                parent: window,
-                name: 'button_$i',
-                x: 8, y: 32 + 8 + 32 + 40 * i, w: 60, h: 32,
-                text: buttons[i].name,
-                text_size: 14,
-                align: TextAlign.left,
-                options: { label: { color:new Color().rgb(0x9dca63) } },
-                onclick: buttons[i].onclick
-            });
-            layout.margin(button, right, fixed, 8);
-        }
-
         function make_slider(name, text, _x, _y, _w, _h, _min, _max, _initial) {
             var _s = new mint.Slider({
                 parent: window, name: name, x:_x, y:_y, w:_w, h:_h,
@@ -206,6 +187,19 @@ class EditState extends luxe.States.State {
     }
 
     override function onrender() {
+        for (line in map_data.lines) {
+            for (p in line.points) {
+                var pos = map_data.layout.get_pos(p.x, p.y);
+                Luxe.draw.circle({
+                    x: pos.x,
+                    y: pos.y,
+                    color: convert_color(line.color),
+                    r: 30,
+                    immediate: true
+                });
+            }
+        }
+
         Luxe.draw.circle({
             x: Luxe.screen.cursor.pos.x,
             y: Luxe.screen.cursor.pos.y,
