@@ -6,10 +6,59 @@ import luxe.Input.Key;
 import game.states.*;
 import game.ds.MapData;
 
+import phoenix.Batcher.BlendMode;
+import phoenix.RenderTexture;
+import phoenix.Texture;
+import phoenix.Batcher;
+import phoenix.Shader;
+import luxe.Sprite;
+import luxe.Vector;
+import luxe.Color;
+
+class PostProcess {
+    var output: RenderTexture;
+    var batch: Batcher;
+    var view: Sprite;
+    public var shader: Shader;
+
+    public function new(shader :Shader) {
+        output = new RenderTexture({ id: 'render-to-texture', width: Luxe.screen.w, height: Luxe.screen.h });
+        batch = Luxe.renderer.create_batcher({ no_add: true });
+        this.shader = shader;
+        view = new Sprite({
+            no_scene: true,
+            centered: false,
+            pos: new Vector(0,0),
+            size: Luxe.screen.size,
+            texture: output,
+            shader: shader, //Luxe.renderer.shaders.textured.shader,
+            batcher: batch
+        });
+    }
+
+    public function toggle() {
+        view.shader = (view.shader == shader ? Luxe.renderer.shaders.textured.shader : shader);
+    }
+
+    public function prerender() {
+        Luxe.renderer.target = output;
+        Luxe.renderer.clear(new Color(0,0,0,1));
+    }
+
+    public function postrender() {
+        Luxe.renderer.target = null;
+        Luxe.renderer.clear(new Color(1,0,0,1));
+        Luxe.renderer.blend_mode(BlendMode.src_alpha, BlendMode.zero);
+        batch.draw();
+        Luxe.renderer.blend_mode();
+    }
+}
+
 class Main extends luxe.Game {
     static public var states :States;
     // static public var map_data :MapData;
     var fullscreen :Bool = false;
+    var postprocess :PostProcess;
 
     override function config(config :luxe.AppConfig) {
         config.preload.textures.push({ id: 'assets/images/line.png' });
@@ -35,6 +84,8 @@ class Main extends luxe.Game {
         config.preload.sounds.push({ id: 'assets/sounds/place.ogg', is_stream: false });
         config.preload.sounds.push({ id: 'assets/sounds/remove.ogg', is_stream: false });
 
+        config.preload.shaders.push({ id: 'postprocess', frag_id: 'assets/shaders/postprocess.glsl', vert_id: 'default' });
+
         config.render.antialiasing = 4;
         return config;
     }
@@ -54,6 +105,11 @@ class Main extends luxe.Game {
         states.add(new EditState());
         states.set(LevelSelectState.StateId, 0 /* starting level */);
         // states.set(PlayState.StateId, 0 /* starting level */);
+
+        var shader = Luxe.resources.shader('postprocess');
+        shader.set_vector2('resolution', Luxe.screen.size);
+        postprocess = new PostProcess(shader);
+        postprocess.toggle();
     }
 
     // Scale camera's viewport accordingly when game is scaled, common and suitable for most games
@@ -65,11 +121,25 @@ class Main extends luxe.Game {
         if (e.keycode == Key.enter && e.mod.alt) {
             fullscreen = !fullscreen;
             Luxe.snow.runtime.window_fullscreen(fullscreen, true /* true-fullscreen */);
+        } else if (e.keycode == Key.key_s) {
+            postprocess.toggle();
         }
         #if desktop
         if (e.keycode == Key.escape) {
             if (!Luxe.core.shutting_down) Luxe.shutdown();
         }
         #end
+    }
+
+    override function onprerender() {
+        if (postprocess != null) postprocess.prerender();
+    }
+
+    override function update(dt :Float) {
+        if (postprocess != null) postprocess.shader.set_float('time', Luxe.core.tick_start + dt);
+    }
+
+    override function onpostrender() {
+        if (postprocess != null) postprocess.postrender();
     }
 }

@@ -250,7 +250,7 @@ class PlayState extends State {
                 if (tile.color == Invalid) {
                     tile.sprite.color = invalidColor;
                 } else {
-                    var alpha = (connected ? 1 : 0.15);
+                    var alpha = (connected ? 1 : 0.35);
                     tile.sprite.color = tile.sprite.color.clone(); // to get rid of invalidColor
                     tile.sprite.color.tween(tween_speed, { r: changedColor.r, g: changedColor.g, b: changedColor.b, a: alpha });
                 }
