@@ -60,7 +60,7 @@ class Main extends luxe.Game {
     var fullscreen :Bool = false;
     var postprocess :PostProcess;
 
-    override function config(config :luxe.AppConfig) {
+    override function config(config :luxe.GameConfig) {
         config.preload.textures.push({ id: 'assets/images/line.png' });
         config.preload.textures.push({ id: 'assets/images/turn.png' });
         config.preload.textures.push({ id: 'assets/images/circle.png' });
